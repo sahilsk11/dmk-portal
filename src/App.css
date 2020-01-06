@@ -1,38 +1,138 @@
-.App {
-  text-align: center;
+.bg-color {
+  background-color: #F7F7FB;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.nav-container {
+  width: 100%;
+  background-color: #AB1B23;
+  height: 58px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.nav-img {
+  width: 50px;
+  margin-left: 20px;
+  margin-top: 6px;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.content-container {
+  width: 100%;
+  margin: 0px auto;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  justify-content: space-between;
+  height: 800px;
+  max-width: 1200px;
+}
+
+.column {
+  width: 100%;
+}
+
+.content-box {
+  background-color: white;
+  width: 90%;
+  box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  display: block;
+  margin: 0px auto;
+  margin-top: 20px;
+  overflow: scroll;
+}
+
+.box-title {
+  text-align: center;
+  padding-top: 10px;
+  margin: 0px;
+}
+
+.box-content {
+  margin-top: 10px;
+  width: 95%;
+  display: block;
+  margin: 0px auto;
+  position: relative;
+}
+
+p {
+  text-align: center;
+  color: grey;
+}
+
+.attendance-graph {
+  padding-top: 20px;
+  margin: 0px auto;
+  display: block;
+  width: 80%;
+}
+
+.spotlight-img {
+  width: 50%;
+  margin: 0px auto;
+  display: block;
+}
+
+.event-item {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.date-container {
+  min-width: 50px;
+  height: 50px;
+  background-color: #AB1B23;
+  border-radius: 10px;
+}
+
+.event-name {
+  margin-top: 5px;
+  margin-left: 10px;
+}
+
+.event-time {
+  margin-top: 10px;
+}
+
+.month {
+  margin-top: 3px;
+  margin-bottom: 0px;
   color: white;
+  font-size: 12px;
 }
 
-.App-link {
-  color: #61dafb;
+.day {
+  color: white;
+  margin-top: 0px;
+  font-size: 25px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.slack-input {
+  margin-top: 20px;
+  width: 98%;
+  height: 100px;
+  resize: none;
+  font-size: 17px;
+  outline: none;
+  background-color: #F7F7FB;
+}
+
+button {
+  font-size: 17px;
+  border: none;
+  background-color: #AB1B23;
+  color: white;
+  width: 80px;
+  height: 25px;
+  position: absolute;
+  cursor: pointer;
+  outline: none;
+  border-radius: 8px;
+}
+
+@media only screen and (max-width: 790px) {
+  .content-container {
+    display: block;
+    max-width: 500px;
   }
-  to {
-    transform: rotate(360deg);
+  .content-box {
+    max-height: 400px;
   }
 }
