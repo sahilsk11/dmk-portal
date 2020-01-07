@@ -316,7 +316,7 @@ class NewsItem extends React.Component {
 class Slack extends React.Component {
   render() {
     return (
-      <div>
+      <div className="input-wrapper">
         <textarea className="slack-input" placeholder="I'm hungry..."></textarea>
         <button>send</button>
       </div>
