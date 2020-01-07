@@ -37,7 +37,6 @@ class ContentContainer extends React.Component {
   }
 
   getBrotherData() {
-    //random variables at the end are used to sort events
     const url = this.state.baseURL + "/brother_data?api_key=" + this.state.apiKey;
     fetch(url).then(res => res.json())
       .then((data) => {
@@ -47,7 +46,6 @@ class ContentContainer extends React.Component {
   }
 
   getSpotlightData() {
-    //random variables at the end are used to sort events
     const url = this.state.baseURL + "/spotlight?api_key=" + this.state.apiKey;
     fetch(url).then(res => res.json())
       .then((data) => {
@@ -59,7 +57,7 @@ class ContentContainer extends React.Component {
   getUpcomingData() {
     let upcomingData = [];
     //random variables at the end are used to sort events
-    const url = this.state.baseURL + "/upcoming?api_key=" + this.state.apiKey;
+    const url = this.state.baseURL + "/upcoming?api_key=" + this.state.apiKey + "&sort%5B0%5D%5Bfield%5D=date_added&sort%5B0%5D%5Bdirection%5D=desc";
     fetch(url).then(res => res.json())
       .then((data) => {
         for (var i = 0; i < data.records.length; i++) {
@@ -72,7 +70,7 @@ class ContentContainer extends React.Component {
   getNewsData() {
     let newsData = [];
     //random variables at the end are used to sort events
-    const url = this.state.baseURL + "/news?api_key=" + this.state.apiKey + "&sort%5B0%5D%5Bfield%5D=date_added";
+    const url = this.state.baseURL + "/news?api_key=" + this.state.apiKey + "&sort%5B0%5D%5Bfield%5D=date_added&sort%5B0%5D%5Bdirection%5D=desc";
     fetch(url).then(res => res.json())
       .then((data) => {
         for (var i = 0; i < data.records.length; i++) {
