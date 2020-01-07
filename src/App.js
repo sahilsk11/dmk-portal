@@ -109,7 +109,6 @@ class ContentContainer extends React.Component {
   }
 
   render() {
-    const data = this.getData();
     return (
       <div className="content-container">
         <div className="column">
