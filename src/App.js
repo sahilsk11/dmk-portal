@@ -25,73 +25,7 @@ class NavBar extends React.Component {
 class ContentContainer extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { apiKey: process.env.API_KEY, baseURL: "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy", eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, brotherName: "" }
-  }
-  getData() {
-    const data = {
-      brotherName: "Sydney",
-      attendance: {
-        percentage: "40",
-        attendedChapters: "2",
-        totalChapters: "5"
-      },
-      spotlight: {
-        content: "Akash Raju ('20): CEO of Glimpse and Founding Class of DMK",
-        img: "./akash.png"
-      },
-      upcoming: [
-        {
-          "content": "John Gedmark (Purdue Aero ‘04) is visiting in chapter 11/04. Read about him here.",
-          "img": "https://dl.airtable.com/.attachmentThumbnails/a8dd5154410a3f5ac76c7d132c34bc24/9a1c89c4"
-        },
-        {
-          "content": "Lila Abrahim (Purdue CompE '90) is visiting for a talk in Arms Atrium. She is an investor and advocate for women in STEM.",
-          "img": "https://startuppurdue.com/images/people/Lila%20Ibrahim.png"
-        },
-        {
-          "content": "It's Atharva Dixit's birthday today!",
-          "img": "https://dl.airtable.com/.attachmentThumbnails/4483254a3ba272130653d96a6c59d0dc/4744988b"
-        }
-      ],
-      news: [
-        {
-          "content": "Mimir (founded by DMK Alumn Prahasith Veluvolu), has been acquired by Hacker Rank",
-          "img": "https://www.mimirhq.com/hubfs/Fall%202018%20Website/mimir-classroom-logotype-color-no-padding.svg"
-        },
-        {
-          "content": "Lila Abrahim (Purdue CompE '90) is visiting for a talk in Arms Atrium. She is an investor and advocate for women in STEM.",
-          "img": "https://startuppurdue.com/images/people/Lila%20Ibrahim.png"
-        },
-        {
-          "content": "It's Atharva Dixit's birthday today!",
-          "img": "https://dl.airtable.com/.attachmentThumbnails/4483254a3ba272130653d96a6c59d0dc/4744988b"
-        }
-      ],
-      events: [
-        {
-          "name": "Dinner with E-board at Panera",
-          "location": "Panera Bread",
-          "time": "6:00 PM",
-          "month": "jan",
-          "day": "13"
-        },
-        {
-          "name": "Back to School Olympics",
-          "location": "TBD",
-          "time": "9:00 PM",
-          "month": "jan",
-          "day": "28"
-        },
-        {
-          "name": "Volunteering at Animal Shelter",
-          "location": "Robert's Animal Shelter",
-          "time": "3:00 PM",
-          "month": "feb",
-          "day": "9"
-        }
-      ]
-    }
-    return data
+    this.state = { apiKey: "", baseURL: "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy", eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, brotherName: "" }
   }
 
   componentDidMount() {
