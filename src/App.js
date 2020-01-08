@@ -110,17 +110,29 @@ class ContentContainer extends React.Component {
     return (
       <div className="content-container">
         <div className="column">
-          <ContentBox title={"Welcome, " + this.state.brotherName + " 👋"} height="6%" />
-          <ContentBox title="Chapter Attendance ❤️" data={this.state.brotherData} content="Attendance" height="45%" />
-          <ContentBox title="Brother Spotlight 🤠" data={this.state.spotlightData} content="Spotlight" height="41.2%" />
+          <ContentBox title={"Welcome, " + this.state.brotherName + " 👋"} height="7%" />
+          <ContentBox title="Chapter Attendance 🙌" height="45%">
+            <Attendance data={this.state.brotherData} />
+          </ContentBox>
+          <ContentBox title="Brother Spotlight 🤠" height="40%">
+            <Spotlight data={this.state.spotlightData} />
+          </ContentBox>
         </div>
         <div className="column">
-          <ContentBox title="Coming Up ⚡️" data={this.state.upcomingData} content="Upcoming" height="44.7%" />
-          <ContentBox title="News Panel 📰" data={this.state.newsData} content="News" height="50%" />
+          <ContentBox title="Coming Up ⚡️" height="44.7%">
+            <NewsList data={this.state.upcomingData} />
+          </ContentBox>
+          <ContentBox title="News Panel 📰" height="50%">
+            <NewsList data={this.state.newsData} />
+          </ContentBox>
         </div>
         <div className="column">
-          <ContentBox title="Upcoming Events 📣" data={this.state.eventsData} content="Event" height="67.7%" />
-          <ContentBox title="Drop us a Line 🤖" content="Slack" height="27%" />
+          <ContentBox title="Upcoming Events 📣" height="67.7%">
+            <EventsList data={this.state.eventsData} />
+          </ContentBox>
+          <ContentBox title="Drop us a Line 🤖" height="27%">
+            <Slack />
+          </ContentBox>
         </div>
       </div>
     )
@@ -128,30 +140,12 @@ class ContentContainer extends React.Component {
 }
 
 class ContentBox extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
-  renderContent() {
-    if (this.props.content == "Attendance") {
-      return <Attendance data={this.props.data} />;
-    } else if (this.props.content == "Spotlight") {
-      return <Spotlight data={this.props.data} />;
-    } else if (this.props.content == "Upcoming" || this.props.content == "News") {
-      return <NewsList data={this.props.data} />;
-    } else if (this.props.content == "Event") {
-      return <Events data={this.props.data} />;
-    } else if (this.props.content == "Slack") {
-      return <Slack data={this.props.data} />;
-    }
-  }
-
   render() {
     return (
       <div className="content-box" style={{ "height": this.props.height }}>
         <h3 className="box-title">{this.props.title}</h3>
         <div className="box-content">
-          {this.renderContent()}
+          {this.props.children}
         </div>
       </div>
     )
@@ -186,9 +180,7 @@ class Spotlight extends React.Component {
         </div>
       )
     }
-    return (
-      <div></div>
-    )
+    return null;
   }
   render() {
     return (
@@ -200,15 +192,10 @@ class Spotlight extends React.Component {
 }
 
 class NewsList extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
   renderItems() {
     var items = [];
-    const data = this.props.data;
-    for (var i = 0; i < data.length; i++) {
-      items.push(<NewsItem content={data[i].headline} img={data[i].img[0].url} link={data[i].link} />);
+    for (var i = 0; i < this.props.data.length; i++) {
+      items.push(<NewsItem data={this.props.data[i]} img={this.props.data[i].img[0].url} />);
     }
     return items;
   }
@@ -219,61 +206,25 @@ class NewsList extends React.Component {
         {this.renderItems()}
       </div>
     );
-  }
-}
-
-class Events extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
-  renderItems() {
-    var items = [];
-    const data = this.props.data;
-    for (var i = 0; i < data.length; i++) {
-      items.push(<EventItem name={data[i].name} time={data[i].time} month={data[i].month} day={data[i].day} />);
-    }
-    return items;
-  }
-
-  render() {
-    return (
-      <div>
-        {this.renderItems()}
-      </div>
-    );
-  }
-}
-
-class EventItem extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    return (
-      <div className="event-item">
-        <div className="date-container">
-          <p className="month">{this.props.month}</p>
-          <p className="day">{this.props.day}</p>
-        </div>
-        <div>
-          <h5 className="event-name">{this.props.name}</h5>
-          <p className="event-time">{this.props.time}</p>
-        </div>
-      </div>
-    )
   }
 }
 
 class NewsItem extends React.Component {
   constructor(props) {
     super(props);
+    this.state = { displayModal: false };
+  }
+
+  toggleModal = () => {
+    this.setState({ displayModal: !this.state.displayModal });
   }
 
   handleClick() {
-    if (this.props.link != "#") {
-      window.open(this.props.link, "_blank")
+    if (this.props.data.link != "#") {
+      window.open(this.props.data.link, "_blank")
+    } else {
+      this.toggleModal();
+      console.log(this.state.displayModal);
     }
   }
 
@@ -286,16 +237,24 @@ class NewsItem extends React.Component {
               <img className="item-img" src={this.props.img} />
             </div>
             <div className="item-text-wrapper">
-              <p className="item-content">{this.props.content}</p>
+              <p className="item-content">{this.props.data.headline}</p>
             </div>
           </div>
+          <Modal display={this.state.displayModal} closeModal={this.toggleModal}>
+            <img src={this.props.img} className="modal-img" />
+            <div className="modal-text-wrapper">
+              <h2 className="modal-title">{this.props.data.headline}</h2>
+              <p className="modal-text">{this.props.data.description}</p>
+            </div>
+            <button className="modal-btn" onClick={this.toggleModal}>close</button>
+          </Modal>
           <hr className="hr" width="70%" />
         </div>
       );
     } else {
       return (
         <div>
-          <p>{this.props.content}</p>
+          <p>{this.props.data.content}</p>
           <hr className="hr" width="70%" />
         </div>
       )
@@ -311,12 +270,91 @@ class NewsItem extends React.Component {
   }
 }
 
+class Modal extends React.Component {
+  render() {
+    if (this.props.display) {
+      return (
+        <div id={this.props.id} className="modal">
+          <div className="modal-content">
+            <span className="close" onClick={this.props.closeModal}>&times;</span>
+            {this.props.children}
+          </div>
+        </div>
+      )
+    } else {
+      console.log("not");
+      return null;
+    }
+  }
+}
+
+class EventsList extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  renderItems() {
+    var items = [];
+    const data = this.props.data;
+    for (var i = 0; i < data.length; i++) {
+      items.push(<EventItem data={data[i]} />);
+    }
+    return items;
+  }
+
+  render() {
+    return (
+      <div className="events-container">
+        {this.renderItems()}
+      </div>
+    );
+  }
+}
+
+class EventItem extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { displayModal: false };
+  }
+
+  toggleModal = () => {
+    this.setState({ displayModal: !this.state.displayModal });
+  }
+
+  render() {
+    return (
+      <div>
+        <div className="event-wrapper">
+          <div className="event-item" onClick={() => this.toggleModal()}>
+            <div className="date-container">
+              <p className="month">{this.props.data.month}</p>
+              <p className="day">{this.props.data.day}</p>
+            </div>
+            <div>
+              <h5 className="event-name">{this.props.data.name}</h5>
+              <p className="event-time">{this.props.data.time}</p>
+            </div>
+          </div>
+        </div>
+        <Modal display={this.state.displayModal} closeModal={this.toggleModal}>
+          
+          <div className="modal-text-wrapper">
+            <h2 className="modal-title">{this.props.data.name}</h2>
+            <p className="modal-text">{this.props.data.description}</p>
+          </div>
+          <button className="modal-btn" onClick={this.toggleModal}>close</button>
+        </Modal>
+      </div>
+    )
+  }
+}
+
 class Slack extends React.Component {
   render() {
     return (
       <div className="input-wrapper">
         <textarea className="slack-input" placeholder="I'm hungry..."></textarea>
-        <button>send</button>
+        <button className="slack-send">send</button>
       </div>
     )
   }
