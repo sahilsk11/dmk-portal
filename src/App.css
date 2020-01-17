@@ -66,7 +66,7 @@ p {
   padding-top: 0px;
   margin: 0px auto;
   display: block;
-  width: 80%;
+  width: 40%;
   max-width: 200px;
   margin-bottom: 10px;
 }
@@ -327,12 +327,28 @@ button:hover {
   background-color: #AB1B23;
 }
 
+.check-in-btn {
+  display: block;
+  margin: 0px auto;
+  margin-top: 40px;
+  height: 40px;
+  width: 140px;
+}
+
 @media only screen and (max-width: 790px) {
   .content-container {
     display: block;
     max-width: 500px;
+    height: auto;
   }
   .content-box {
     max-height: 400px;
+  }
+  .slack-input {
+    margin-bottom: 50px;
+  }
+  .slack-send {
+    bottom: 20px;
+    right: 10px;
   }
 }

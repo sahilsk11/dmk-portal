@@ -40,7 +40,6 @@ class ContentContainer extends React.Component {
     const url = this.state.baseURL + "/brother_data?api_key=" + this.state.apiKey;
     fetch(url).then(res => res.json())
       .then((data) => {
-        console.log(data.records);
         this.setState({ brotherData: data.records[0].fields, brotherName: data.records[0].fields["first_name"] });
       });
   }
@@ -49,7 +48,6 @@ class ContentContainer extends React.Component {
     const url = this.state.baseURL + "/spotlight?api_key=" + this.state.apiKey;
     fetch(url).then(res => res.json())
       .then((data) => {
-        console.log(data.records);
         this.setState({ spotlightData: data.records[0].fields });
       });
   }
@@ -110,9 +108,10 @@ class ContentContainer extends React.Component {
     return (
       <div className="content-container">
         <div className="column">
-          <ContentBox title={"Welcome, " + this.state.brotherName + " 👋"} height="7%" />
+          {/*<ContentBox title={"Welcome, " + this.state.brotherName + " 👋"} height="7%" />*/}
+          <ContentBox title={"Welcome 👋"} height="7%" />
           <ContentBox title="Chapter Attendance 🙌" height="45%">
-            <Attendance data={this.state.brotherData} />
+            <Attendance data={this.state.brotherData} apiKey={this.state.apiKey} />
           </ContentBox>
           <ContentBox title="Brother Spotlight 🤠" height="40%">
             <Spotlight data={this.state.spotlightData} />
@@ -156,27 +155,48 @@ class Attendance extends React.Component {
   constructor(props) {
     super(props);
   }
+  checkIn() {
+    console.log("clicked");
+    const url = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/attendance?api_key=" + this.props.apiKey;
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        "records": [
+          {
+            "fields": {
+              "Name": "Sydney8",
+              "check-in-time": "2020-01-11T01:31:00.000Z"
+            }
+          }
+        ]
+      })
+    }).then(res => res.json())
+      .then((data) => {
+        console.log(data.records);
+      });
+  }
   render() {
     return (
       <div>
         <img src="attendance.png" className="attendance-graph" />
         <p>We've seen you at {this.props.data.attendance} out of 5 chapters this semester.</p>
+        <button onClick={() => this.checkIn()} className="check-in-btn">check in now</button>
+
       </div>
     );
   }
 }
 
 class Spotlight extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
   renderWhenReady() {
     if (this.props.data.img != undefined) {
       return (
         <div>
           <img className="spotlight-img" src={this.props.data.img[0].url} />
-          <p className="brother-description">Meet Akash Raju ('20): CEO of Glimpse and Founding Class of DMK</p>
+          <p className="brother-description">{this.props.data.content}</p>
         </div>
       )
     }
@@ -195,7 +215,7 @@ class NewsList extends React.Component {
   renderItems() {
     var items = [];
     for (var i = 0; i < this.props.data.length; i++) {
-      items.push(<NewsItem data={this.props.data[i]} img={this.props.data[i].img[0].url} />);
+      items.push(<NewsItem key={i} data={this.props.data[i]} img={this.props.data[i].img[0].url} />);
     }
     return items;
   }
@@ -282,7 +302,6 @@ class Modal extends React.Component {
         </div>
       )
     } else {
-      console.log("not");
       return null;
     }
   }
@@ -297,7 +316,7 @@ class EventsList extends React.Component {
     var items = [];
     const data = this.props.data;
     for (var i = 0; i < data.length; i++) {
-      items.push(<EventItem data={data[i]} />);
+      items.push(<EventItem key={i} data={data[i]} />);
     }
     return items;
   }
@@ -337,7 +356,7 @@ class EventItem extends React.Component {
           </div>
         </div>
         <Modal display={this.state.displayModal} closeModal={this.toggleModal}>
-          
+
           <div className="modal-text-wrapper">
             <h2 className="modal-title">{this.props.data.name}</h2>
             <p className="modal-text">{this.props.data.description}</p>
@@ -354,7 +373,7 @@ class Slack extends React.Component {
     return (
       <div className="input-wrapper">
         <textarea className="slack-input" placeholder="I'm hungry..."></textarea>
-        <button className="slack-send">send</button>
+        <button className="slack-send" onClick={() => alert("This doesn't do anything yet :(")}>send</button>
       </div>
     )
   }
