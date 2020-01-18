@@ -413,12 +413,20 @@ class ContentContainer extends React.Component {
     if (Cookies.get("user") == undefined) {
       window.location = "/login"
     }
+    this.fetchPageData();
     this.getEventData();
     this.getNewsData();
     this.getUpcomingData();
     this.getSpotlightData();
     this.getBrotherData();
 
+  }
+
+  fetchPageData() {
+    const url = "http://localhost:8080/pageData";
+    fetch(url, {
+      method: 'POST'
+    })
   }
 
   getBrotherData() {

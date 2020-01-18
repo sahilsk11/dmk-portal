@@ -1,7 +1,7 @@
 class Index extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { firstName: "S", lastName: "a", username: "h", displayState: "form", password: "" }
+    this.state = { firstName: "", lastName: "", username: "", displayState: "form", password: "", loading: false }
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -15,6 +15,7 @@ class Index extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
+    this.setState({ loading: true })
     if (this.validateFields()) {
       const url = "http://localhost:8080";
       fetch(url + "/add?first=" + this.state.firstName + "&last=" + this.state.lastName + "&username=" + this.state.username, {
@@ -22,9 +23,11 @@ class Index extends React.Component {
         body: JSON.stringify(this.state)
       }).then(response => response.json())
         .then(data => {
-          if (data["sent"]) {
+          if (data.sent) {
             this.setState({ displayState: "loading" })
           } else {
+            const state = data.state;
+            console.log(state);
             this.setState({ displayState: "error" })
           }
         }).catch((error) => {
@@ -33,10 +36,10 @@ class Index extends React.Component {
     } else {
       this.setState({ displayState: "invalid" })
     }
-    console.log(this.state)
   }
 
-  validateToken() {
+  validateToken(event) {
+    event.preventDefault();
     const url = "http://localhost:8080";
     fetch(url + "/authenticate?username=" + this.state.username + "&token=" + this.state.password, {
       method: "POST"
@@ -60,14 +63,16 @@ class Index extends React.Component {
     if (this.state.displayState === "form") {
       return (
         <ContentBox title={"Hey There 👋"} subtitle={"Welcome to the new DMK Portal!"}>
-          <FormBox firstName={this.state.firstName} lastName={this.state.lastName} username={this.state.username} handleChange={this.handleChange} handleSubmit={this.handleSubmit} />
+          <FormBox loading={this.state.loading} firstName={this.state.firstName} lastName={this.state.lastName} username={this.state.username} handleChange={this.handleChange} handleSubmit={this.handleSubmit} />
         </ContentBox>
       );
     } else if (this.state.displayState === "loading") {
       return (
         <ContentBox title={"Check your email 📫"} subtitle={"Check your Purdue email for authentication. If you didn't get anything, refresh and retype your username."}>
-          <Input placeholder="top secret..." />
-          <Button onClick={this.validateToken} />
+          <form onSubmit={this.validateToken}>
+            <Input placeholder="top secret..." />
+            <Button loading={this.state.loading} />
+          </form>
         </ContentBox>
       );
     } else if (this.state.displayState === "invalid") {
@@ -194,7 +199,7 @@ class FormBox extends React.Component {
           <Input name="lastName" value={this.props.lastName} onChange={this.props.handleChange} placeholder="Last Name" />
           <Input name="username" value={this.props.username} onChange={this.props.handleChange} placeholder="Purdue Username" />
         </div>
-        <Button />
+        <Button loading={this.props.loading} />
       </form>
     )
   }
@@ -241,12 +246,25 @@ class Button extends React.Component {
       margin: "0px auto",
       marginTop: "30px"
     }
+    const loadingSyle = {
+      width: "30px",
+      display: "block",
+      margin: "0px auto"
+    }
     if (this.state.hover) {
       buttonStyle.backgroundColor = "#AB1B23"
     }
-    return (
-      <button onMouseLeave={() => this.toggleHover()} onMouseEnter={() => this.toggleHover()} style={buttonStyle} onClick={this.props.onClick}>→</button>
-    )
+    if (this.props.loading) {
+      return (
+        <img src="/images/loading.gif" style={loadingSyle} />
+      )
+    } else {
+      return (
+        <div>
+          <button onMouseLeave={() => this.toggleHover()} onMouseEnter={() => this.toggleHover()} style={buttonStyle} onClick={this.props.onClick}>→</button>
+        </div>
+      )
+    }
   }
 }
 
