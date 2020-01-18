@@ -408,25 +408,12 @@ class ContentContainer extends React.Component {
     this.state = { apiKey: "", baseURL: "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy", eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, brotherName: "" }
   }
 
-  setApiKey(callback) {
-    const url = "http://localhost:8080"
-    fetch(url + "/api", {
-      method: "POST"
-    }).then(response => response.json())
-      .then(data => {
-        this.setState({ apiKey: data.apiKey })
-      })
-  }
-
   componentDidMount() {
     console.log("hi")
     if (Cookies.get("user") == undefined) {
       window.location = "/login"
     }
-    this.setApiKey(this.renderPageData)
-  }
-    
-  renderPageData() {
+    setApiKey();
     if (this.state.apiKey != "") {
       this.getEventData();
       this.getNewsData();
@@ -442,7 +429,7 @@ class ContentContainer extends React.Component {
       .then((data) => {
         var i = 0;
         var found = false;
-        while (i < data.records.length && !found) {
+        while(i < data.records.length && !found) {
           if (Cookies.get("user") == data.records[i].fields.username) {
             this.setState({ brotherData: data.records[i].fields, brotherName: data.records[i].fields["first_name"] });
             found = true;
@@ -452,7 +439,7 @@ class ContentContainer extends React.Component {
         if (!found) {
           alert("Hm, we couldn't find you in our system. Please log in again");
           Cookies.remove("user");
-          window.location = "/login";
+          window.location="/login";
         }
         console.log(this.state.brotherData)
       });
