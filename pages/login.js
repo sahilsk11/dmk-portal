@@ -1,11 +1,12 @@
 class Index extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { firstName: "", lastName: "", username: "", displayState: "form", password: "", loading: false }
+    this.state = { firstName: "", lastName: "", username: "", displayState: "entry", password: "", loading: false, newUser: false }
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.validateToken = this.validateToken.bind(this);
+    this.checkUsername = this.checkUsername.bind(this);
   }
 
   handleChange(event) {
@@ -55,33 +56,50 @@ class Index extends React.Component {
       })
   }
 
+  checkUsername(event) {
+    event.preventDefault();
+    console.log(this.state.username)
+    this.setState({ loading: true })
+    const url = "http://localhost:8080/check_user?=" + this.state.username;
+    fetch(url, {
+      method: 'POST'
+    }).then(response => response.json())
+      .then(data => {
+        let newUser = false;
+        let newState = data.state;
+        if (data.state === "new_user") {
+          newUser = true;
+          newState = "authenticate"
+        }
+        this.setState({ displayState: newState, loading: false, newUser: newUser });
+      });
+  }
+
   validateFields() {
     return (this.state.firstName !== "" && this.state.lastName !== "" && this.state.username !== "");
   }
 
   displayBox() {
-    if (this.state.displayState === "form") {
+    if (this.state.displayState === "entry") {
       return (
-        <ContentBox title={"Hey There 👋"} subtitle={"Welcome to the new DMK Portal!"}>
-          <FormBox loading={this.state.loading} firstName={this.state.firstName} lastName={this.state.lastName} username={this.state.username} handleChange={this.handleChange} handleSubmit={this.handleSubmit} />
-        </ContentBox>
-      );
-    } else if (this.state.displayState === "loading") {
-      return (
-        <ContentBox title={"Check your email 📫"} subtitle={"Check your Purdue email for authentication. If you didn't get anything, refresh and retype your username."}>
-          <form onSubmit={this.validateToken}>
-            <Input placeholder="top secret..." />
+        <ContentBox title={"Hey There 👋"} subtitle={"Welcome to the DMK Portal! Let's start with your Purdue username."}>
+          <form onSubmit={this.checkUsername}>
+            <Input name="username" onChange={this.handleChange} placeholder="Purdue Username" value={this.state.username} />
             <Button loading={this.state.loading} />
           </form>
         </ContentBox>
       );
-    } else if (this.state.displayState === "invalid") {
+    } else if (this.state.displayState === "authenticate") {
       return (
-        <ContentBox title={"Uh Oh 😕"} subtitle={"Looks like you are missing some fields. Try again."}>
-          <FormBox firstName={this.state.firstName} lastName={this.state.lastName} username={this.state.username} handleChange={this.handleChange} handleSubmit={this.handleSubmit} />
+        <ContentBox title={"Check your email 📫"} subtitle={"Check your Purdue email for authentication (or continue if password saved)."}>
+          <form onSubmit={this.validateToken}>
+            <Input value={this.state.password} placeholder="top secret..." />
+            <Button loading={this.state.loading} />
+          </form>
         </ContentBox>
-      )
+      );
     } else {
+      console.log(this.state.displayState);
       return (
         <ContentBox title={"Well, that's embarrassing 🙈"} subtitle={"There's an error on our end. Try again later!"}>
         </ContentBox>
@@ -218,7 +236,7 @@ class Input extends React.Component {
       width: this.props.width
     }
     return (
-      <input name={this.props.name} style={inputStyle} value={this.props.firstName} onChange={this.props.onChange} placeholder={this.props.placeholder} />
+      <input name={this.props.name} style={inputStyle} value={this.props.value} onChange={this.props.onChange} placeholder={this.props.placeholder} />
     )
   }
 }

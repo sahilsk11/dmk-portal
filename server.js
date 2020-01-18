@@ -8,47 +8,32 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
-function airtableCall(route) {
-  const apiKey = process.env.api_key;
-  const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy" + route + "?api_key=" + apiKey;
-  const req = https.get(baseURL, (res) => {
-    res.on('data', function (data) {
-      const jsonData = JSON.parse(data);
-      console.log("airtable resp")
-      console.log(jsonData);
-      if (jsonData == undefined) {
-        console.log("Error: undefined response from airtable")
-      } else {
-        return jsonData;
-      }
-    });
-  })
-}
-
 app.listen(8080, () => {
   console.log("Server running on port 8080");
 });
 
-app.post("/add", (req, res) => {
+app.post("/check_user", (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
   const username = req.query.username;
   const apiKey = process.env.api_key;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + apiKey;
   request(baseURL, function (error, response, body) {
-    const airtableResp = JSON.parse(response.body);
-    if (airtableResp == undefined) {
+    if (response == undefined) {
       console.log("Undefined response from airtable in endpoint")
-      res.json({ sent: false, state: 'connection_error' });
+      res.json({ state: 'connection_error' });
       return;
     }
+    const airtableResp = JSON.parse(response.body);
     for (var i = 0; i < airtableResp.records.length; i++) {
       if (username === airtableResp.records[i].fields.username) {
-        res.json({ sent: false, state: 'exists' });
+        res.json({ state: 'authenticate' });
         return;
+      } else {
+        console.log("not found")
       }
     }
-    sendEmail("kapur8", generateCode())
-    res.json({ sent: true });
+    //sendEmail("kapur8", generateCode())
+    res.json({ state: 'new_user' });
   })
 });
 
