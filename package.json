@@ -5,13 +5,16 @@
   "main": "index.js",
   "keywords": [],
   "scripts": {
-  "dev": "next",
-  "build": "next build",
-  "start": "next start"
+    "dev": "next",
+    "build": "next build",
+    "start": "next start"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "js-cookie": "^2.2.1",
     "next": "^9.2.0",
     "react": "^16.12.0",
     "react-dom": "^16.12.0"

@@ -25,7 +25,7 @@ class NavBar extends React.Component {
 class ContentContainer extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { apiKey: "", baseURL: "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy", eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, brotherName: "" }
+    this.state = { apiKey: "keyjYTQNlzdmReX94", baseURL: "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy", eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, brotherName: "" }
   }
 
   componentDidMount() {
