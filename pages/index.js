@@ -405,7 +405,7 @@ class NavBar extends React.Component {
 class ContentContainer extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { apiKey: "", baseURL: "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy", eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, brotherName: "" }
+    this.state = { apiKey: "keyjYTQNlzdmReX94", baseURL: "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy", eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, brotherName: "" }
   }
 
   componentDidMount() {
@@ -413,14 +413,12 @@ class ContentContainer extends React.Component {
     if (Cookies.get("user") == undefined) {
       window.location = "/login"
     }
-    setApiKey();
-    if (this.state.apiKey != "") {
-      this.getEventData();
-      this.getNewsData();
-      this.getUpcomingData();
-      this.getSpotlightData();
-      this.getBrotherData();
-    }
+    this.getEventData();
+    this.getNewsData();
+    this.getUpcomingData();
+    this.getSpotlightData();
+    this.getBrotherData();
+
   }
 
   getBrotherData() {
@@ -429,7 +427,7 @@ class ContentContainer extends React.Component {
       .then((data) => {
         var i = 0;
         var found = false;
-        while(i < data.records.length && !found) {
+        while (i < data.records.length && !found) {
           if (Cookies.get("user") == data.records[i].fields.username) {
             this.setState({ brotherData: data.records[i].fields, brotherName: data.records[i].fields["first_name"] });
             found = true;
@@ -439,7 +437,7 @@ class ContentContainer extends React.Component {
         if (!found) {
           alert("Hm, we couldn't find you in our system. Please log in again");
           Cookies.remove("user");
-          window.location="/login";
+          window.location = "/login";
         }
         console.log(this.state.brotherData)
       });
