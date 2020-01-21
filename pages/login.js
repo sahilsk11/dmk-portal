@@ -4,8 +4,7 @@ class Index extends React.Component {
     this.state = { firstName: "", lastName: "", username: "", displayState: "entry", password: "", loading: false, newUser: false }
 
     this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.validateToken = this.validateToken.bind(this);
+    this.authenticate = this.authenticate.bind(this);
     this.checkUsername = this.checkUsername.bind(this);
   }
 
@@ -14,32 +13,7 @@ class Index extends React.Component {
     this.setState({ [inputName]: event.target.value });
   }
 
-  handleSubmit(event) {
-    event.preventDefault();
-    this.setState({ loading: true })
-    if (this.validateFields()) {
-      const url = "http://localhost:8080";
-      fetch(url + "/add?first=" + this.state.firstName + "&last=" + this.state.lastName + "&username=" + this.state.username, {
-        method: "POST",
-        body: JSON.stringify(this.state)
-      }).then(response => response.json())
-        .then(data => {
-          if (data.sent) {
-            this.setState({ displayState: "loading" })
-          } else {
-            const state = data.state;
-            console.log(state);
-            this.setState({ displayState: "error" })
-          }
-        }).catch((error) => {
-          this.setState({ displayState: "error" })
-        });
-    } else {
-      this.setState({ displayState: "invalid" })
-    }
-  }
-
-  validateToken(event) {
+  authenticate(event) {
     event.preventDefault();
     const url = "http://localhost:8080";
     fetch(url + "/authenticate?username=" + this.state.username + "&token=" + this.state.password, {
@@ -47,8 +21,7 @@ class Index extends React.Component {
     }).then(response => response.json())
       .then(data => {
         if (data["authenticated"]) {
-          document.cookie = "user=" + this.state.username + "; path=/";
-          document.cookie = "name=" + this.state.firstName + "; path=/";
+          document.cookie = "token=" + data.token + "; path=/";
           window.location = "/";
         } else {
           this.setState({ displayState: "error" })
@@ -60,7 +33,7 @@ class Index extends React.Component {
     event.preventDefault();
     console.log(this.state.username)
     this.setState({ loading: true })
-    const url = "http://localhost:8080/check_user?=" + this.state.username;
+    const url = "http://localhost:8080/check_user?username=" + this.state.username;
     fetch(url, {
       method: 'POST'
     }).then(response => response.json())
@@ -72,7 +45,9 @@ class Index extends React.Component {
           newState = "authenticate"
         }
         this.setState({ displayState: newState, loading: false, newUser: newUser });
-      });
+      }).catch((error) => {
+        this.setState({ displayState: "error" });
+      });;
   }
 
   validateFields() {
@@ -92,8 +67,8 @@ class Index extends React.Component {
     } else if (this.state.displayState === "authenticate") {
       return (
         <ContentBox title={"Check your email 📫"} subtitle={"Check your Purdue email for authentication (or continue if password saved)."}>
-          <form onSubmit={this.validateToken}>
-            <Input value={this.state.password} placeholder="top secret..." />
+          <form onSubmit={this.authenticate}>
+            <Input name="password" onChange={this.handleChange} value={this.state.password} placeholder="top secret..." />
             <Button loading={this.state.loading} />
           </form>
         </ContentBox>
@@ -161,7 +136,7 @@ class ContentBox extends React.Component {
         margin: "0px auto",
         marginTop: "20px",
         overflow: "scroll",
-        height: "450px",
+        height: "350px",
         maxWidth: "95%"
       },
       boxTitleStyle: {
@@ -195,30 +170,6 @@ class ContentBox extends React.Component {
           {this.props.children}
         </div>
       </div>
-    )
-  }
-}
-
-class FormBox extends React.Component {
-  render() {
-    let styles = {
-      formContainer: {
-        display: "block",
-        margin: "0px auto",
-        width: "100%",
-        marginBottom: "20px",
-        marginTop: "30px"
-      }
-    };
-    return (
-      <form onSubmit={this.props.handleSubmit}>
-        <div style={styles.formContainer}>
-          <Input name="firstName" value={this.props.firstName} onChange={this.props.handleChange} placeholder="First Name" />
-          <Input name="lastName" value={this.props.lastName} onChange={this.props.handleChange} placeholder="Last Name" />
-          <Input name="username" value={this.props.username} onChange={this.props.handleChange} placeholder="Purdue Username" />
-        </div>
-        <Button loading={this.props.loading} />
-      </form>
     )
   }
 }

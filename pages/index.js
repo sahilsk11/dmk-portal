@@ -410,7 +410,7 @@ class ContentContainer extends React.Component {
 
   componentDidMount() {
     console.log("hi")
-    if (Cookies.get("user") == undefined) {
+    if (Cookies.get("token") == undefined) {
       window.location = "/login"
     }
     this.fetchPageData();
@@ -436,7 +436,7 @@ class ContentContainer extends React.Component {
         var i = 0;
         var found = false;
         while (i < data.records.length && !found) {
-          if (Cookies.get("user") == data.records[i].fields.username) {
+          if (Cookies.get("token") == data.records[i].fields.username) {
             this.setState({ brotherData: data.records[i].fields, brotherName: data.records[i].fields["first_name"] });
             found = true;
           }
