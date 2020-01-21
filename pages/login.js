@@ -1,92 +1,122 @@
 class Index extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { firstName: "", lastName: "", username: "", displayState: "entry", password: "", loading: false, newUser: false }
+    //this.state = { firstName: "", lastName: "", username: "", displayState: "entry", password: "", loading: false, newUser: false }
+    this.state = { displayState: "username", loading: false, inputValue: "", newUser: false, username: "" }
 
     this.handleChange = this.handleChange.bind(this);
     this.authenticate = this.authenticate.bind(this);
     this.checkUsername = this.checkUsername.bind(this);
+    this.setFirstName = this.setFirstName.bind(this);
+    this.setLastName = this.setLastName.bind(this);
   }
 
   handleChange(event) {
-    const inputName = event.target.name;
-    this.setState({ [inputName]: event.target.value });
-  }
-
-  authenticate(event) {
-    event.preventDefault();
-    const url = "http://localhost:8080";
-    fetch(url + "/authenticate?username=" + this.state.username + "&token=" + this.state.password, {
-      method: "POST"
-    }).then(response => response.json())
-      .then(data => {
-        if (data["authenticated"]) {
-          document.cookie = "token=" + data.token + "; path=/";
-          window.location = "/";
-        } else {
-          this.setState({ displayState: "error" })
-        }
-      })
+    this.setState({ inputValue: event.target.value });
   }
 
   checkUsername(event) {
     event.preventDefault();
-    console.log(this.state.username)
     this.setState({ loading: true })
-    const url = "http://localhost:8080/check_user?username=" + this.state.username;
+    const username = this.state.inputValue;
+    const url = "http://localhost:8080/check_user?username=" + username;
     fetch(url, {
       method: 'POST'
     }).then(response => response.json())
       .then(data => {
-        let newUser = false;
-        let newState = data.state;
-        if (data.state === "new_user") {
-          newUser = true;
-          newState = "authenticate"
-        }
-        this.setState({ displayState: newState, loading: false, newUser: newUser });
+        this.setState({ 
+          displayState: data.state === "new_user" ? "emailVerification" : data.state,
+          cellID: data.cellID,
+          newUser: data.state === "new_user",
+          username,
+          loading: false,
+          inputValue: ""
+        });
       }).catch((error) => {
         this.setState({ displayState: "error" });
       });;
   }
 
-  validateFields() {
-    return (this.state.firstName !== "" && this.state.lastName !== "" && this.state.username !== "");
+  authenticate(event) {
+    event.preventDefault();
+    const token = this.state.inputValue;
+    const url = "http://localhost:8080/authenticate?username=" + this.state.username + "&token=" + token;
+    fetch(url, {
+      method: "POST"
+    }).then(response => response.json())
+      .then(data => {
+        if (data.authenticated) {
+          if (this.state.newUser) {
+            this.setState({ displayState: "newUserFirstName", inputValue: "" });
+          } else {
+            document.cookie = "token=" + data.token + "; path=/";
+            window.location = "/";
+          }
+        } else {
+          this.setState({ displayState: "invalid_password" })
+        }
+      })
   }
 
-  displayBox() {
-    if (this.state.displayState === "entry") {
-      return (
-        <ContentBox title={"Hey There 👋"} subtitle={"Welcome to the DMK Portal! Let's start with your Purdue username."}>
-          <form onSubmit={this.checkUsername}>
-            <Input name="username" onChange={this.handleChange} placeholder="Purdue Username" value={this.state.username} />
-            <Button loading={this.state.loading} />
-          </form>
-        </ContentBox>
-      );
-    } else if (this.state.displayState === "authenticate") {
-      return (
-        <ContentBox title={"Check your email 📫"} subtitle={"Check your Purdue email for authentication (or continue if password saved)."}>
-          <form onSubmit={this.authenticate}>
-            <Input name="password" onChange={this.handleChange} value={this.state.password} placeholder="top secret..." />
-            <Button loading={this.state.loading} />
-          </form>
-        </ContentBox>
-      );
-    } else {
-      console.log(this.state.displayState);
-      return (
-        <ContentBox title={"Well, that's embarrassing 🙈"} subtitle={"There's an error on our end. Try again later!"}>
-        </ContentBox>
-      )
-    }
+  setFirstName(event) {
+    event.preventDefault();
+    this.setState({ firstName: this.state.inputValue, inputValue: "", displayState: "newUserLastName" });
+  }
+
+  setLastName(event) {
+    event.preventDefault();
+    const lastName = this.state.inputValue;
+    const url = "http://localhost:8080/add_name?cellID=" + this.state.cellID + "&firstName=" + this.state.firstName + "&lastName=" + lastName;
+    fetch(url);
+    document.cookie = "token=" + this.state.username + "; path=/";
+    window.location = "/";
   }
 
   render() {
+    const pageStates = {
+      username: {
+        title: "Hey There 👋",
+        subtitle: "Welcome to the DMK Portal! Let's start with your Purdue username.",
+        onFormSubmit: this.checkUsername,
+        inputPlaceholder: "Purdue Username"
+      },
+      emailVerification: {
+        title: "Check your email 📫",
+        subtitle: "Check your Purdue email for authentication (or continue if password saved).",
+        onFormSubmit: this.authenticate,
+        inputPlaceholder: "top secret..."
+      },
+      newUserFirstName: {
+        title: "You look new! 👀",
+        subtitle: "What's your first name?",
+        onFormSubmit: this.setFirstName,
+        inputPlaceholder: "What do you go by?"
+      },
+      newUserLastName: {
+        title: "...and last name 🎉",
+        subtitle: "No middle name please.",
+        onFormSubmit: this.setLastName,
+        inputPlaceholder: "Who are your people?"
+      },
+      error: {
+        title: "Well, that's embarrassing 🙈",
+        subtitle: "There's an error on our end. Try again later!",
+        onFormSubmit: this.authenticate,
+        inputPlaceholder: "top secret...",
+        hideForm: true
+      }
+    }
+    const stateElements = pageStates[this.state.displayState];
     return (
       <div>
         <NavBar />
-        {this.displayBox()}
+        {/*this.displayBox()*/}
+        <ContentBox title={stateElements.title} subtitle={stateElements.subtitle}>
+          <form onSubmit={stateElements.onFormSubmit}>
+            <Input onChange={this.handleChange} value={this.state.inputValue} placeholder={stateElements.inputPlaceholder} hide={stateElements.hideForm} />
+            <Button loading={this.state.loading} hide={stateElements.hideForm} />
+          </form>
+        </ContentBox>
         {/*Global CSS goes in here*/}
         <style jsx global>
           {`
@@ -100,7 +130,7 @@ class Index extends React.Component {
             
           `}
         </style>
-      </div>
+      </div >
     );
   }
 }
@@ -186,9 +216,11 @@ class Input extends React.Component {
       textAlign: "center",
       width: this.props.width
     }
-    return (
-      <input name={this.props.name} style={inputStyle} value={this.props.value} onChange={this.props.onChange} placeholder={this.props.placeholder} />
-    )
+    if (this.props.hide !== true) {
+      return (
+        <input name={this.props.name} style={inputStyle} value={this.props.value} onChange={this.props.onChange} placeholder={this.props.placeholder} />
+      )
+    } return null;
   }
 }
 
@@ -222,6 +254,9 @@ class Button extends React.Component {
     }
     if (this.state.hover) {
       buttonStyle.backgroundColor = "#AB1B23"
+    }
+    if (this.props.hide === true) {
+      return null;
     }
     if (this.props.loading) {
       return (

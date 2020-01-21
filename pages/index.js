@@ -405,7 +405,7 @@ class NavBar extends React.Component {
 class ContentContainer extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { apiKey: "keyjYTQNlzdmReX94", baseURL: "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy", eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, brotherName: "" }
+    this.state = { apiKey: "", baseURL: "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy", eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, brotherName: "" }
   }
 
   componentDidMount() {
@@ -573,8 +573,8 @@ class Attendance extends React.Component {
         "records": [
           {
             "fields": {
-              "Name": "Sydney8",
-              "check-in-time": "2020-01-11T01:31:00.000Z"
+              "Name": Cookies.get("token"),
+              "check-in-time": `2020-01-11T01:31:00.000Z`
             }
           }
         ]

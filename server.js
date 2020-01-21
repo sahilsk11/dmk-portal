@@ -18,6 +18,7 @@ app.post("/check_user", (req, res) => {
   const username = req.query.username;
   const apiKey = process.env.api_key;
   let userToken;
+  let airtableCell;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + apiKey;
   request(baseURL, function (error, response, body) {
     console.log(response.statusCode);
@@ -32,7 +33,7 @@ app.post("/check_user", (req, res) => {
     while (!userFound && i < airtableResp.records.length) {
       console.log(username)
       if (username === airtableResp.records[i].fields.username) {
-        res.json({ state: 'authenticate' });
+        res.json({ state: 'emailVerification' });
         userFound = true;
         userToken = airtableResp.records[i].fields.auth;
       }
@@ -50,7 +51,7 @@ app.post("/check_user", (req, res) => {
               attendance: 0,
               last_name: "",
               first_name: "",
-              auth: code
+              auth: userToken
             }
           }
         ]
@@ -59,12 +60,12 @@ app.post("/check_user", (req, res) => {
         method: 'POST',
         url: baseURL,
         json: jsonString
-      }, function(error, response, body) {
-        console.log(body);
+      }, function (error, response, body) {
+        cellID = body.records[0].id;
+        res.json({ state: 'new_user', cellID: cellID });
       });
-      res.json({ state: 'new_user' });
     }
-    sendEmail(username, userToken)
+    //sendEmail(username, userToken)
   })
 });
 
@@ -100,6 +101,34 @@ app.post("/authenticate", (req, res) => {
     }
   });
 });
+
+app.get("/add_name", (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  const firstName = req.query.firstName;
+  const lastName = req.query.lastName;
+  const cellID = req.query.cellID;
+  const apiKey = process.env.api_key;
+  const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + apiKey;
+  const jsonString = {
+    records: [
+      {
+        id: cellID,
+        fields: {
+          last_name: lastName,
+          first_name: firstName,
+        }
+      }
+    ]
+  }
+  request({
+    method: 'PATCH',
+    url: baseURL,
+    json: jsonString,
+  }, function (error, response, body) {
+    console.log(body);
+    res.json({ sucess: true })
+  });
+})
 
 app.post("/api", (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
