@@ -136,24 +136,37 @@ function gatherAirtableData(req, res) {
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy";
   let promises = [];
   let response = {};
-  promises.push(new Promise(function(res, rej) {
-    const brotherData = getBrotherData(baseURL, username, res, rej)
-    return brotherData;
-  }));
-  promises.push(new Promise(function(res, rej) {
-    response.spotlightData = getBrotherSpotLight(baseURL, res);
-  }));
-  promises.push(new Promise(function(res, rej) {
-    response.upcomingData = getDataList(baseURL, "/upcoming", res);
-  }));
-  promises.push(new Promise(function(res, rej) {
-    response.newsData = getDataList(baseURL, "/news", res);
-  }));
   promises.push(new Promise(function (res, rej) {
-    response.eventsData = getDataList(baseURL, "/events", res);
-  }));
-  Promise.all(promises).then(function(values) {
-    console.log(values);
+      getBrotherData(baseURL, username, res, rej)
+    }).then(function(brotherData) {
+      response.brotherData = brotherData;
+    })
+  );
+  promises.push(new Promise(function (res, rej) {
+      getBrotherSpotLight(baseURL, res);
+    }).then(function(brotherSpotlight) {
+      response.brotherSpotlight = brotherSpotlight;
+    })
+  );
+  promises.push(new Promise(function (res, rej) {
+      getDataList(baseURL, "/upcoming", res);
+    }).then(function(upcomingData) {
+      response.upcomingData = upcomingData;
+    })
+  );
+  promises.push(new Promise(function (res, rej) {
+      getDataList(baseURL, "/news", res);
+    }).then(function (newsData) {
+      response.newsData = newsData;
+    })
+  );
+  promises.push(new Promise(function (res, rej) {
+      getDataList(baseURL, "/events", res);
+    }).then(function (eventsData) {
+      response.eventsData = eventsData;
+    })
+  );
+  Promise.all(promises).then(function (values) {
     res.json({ body: response });
   })
 }

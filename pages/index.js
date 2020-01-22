@@ -2,8 +2,12 @@ import Cookies from 'js-cookie';
 
 class Index extends React.Component {
   render() {
+    const style = {
+      position: "relative",
+      minHeight: "100vh",
+    }
     return (
-      <div>
+      <div style={style}>
         <NavBar />
         <ContentContainer />
         <style jsx global>
@@ -405,7 +409,7 @@ class NavBar extends React.Component {
 class ContentContainer extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}}
+    this.state = { eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, loadedPage: false}
   }
 
   componentDidMount() {
@@ -421,17 +425,36 @@ class ContentContainer extends React.Component {
     const url = "http://localhost:8080/pageData?username=" + Cookies.get("token");
     fetch(url).then(res => res.json())
     .then((data) => {
-      console.log(data);
+      this.setState({
+        spotlightData: data.body.brotherSpotlight,
+        upcomingData: data.body.upcomingData,
+        newsData: data.body.newsData,
+        eventsData: data.body.eventsData,
+        brotherData: data.body.brotherData,
+        loadedPage: true
+      })
     });
   }
 
   render() {
+    if (!this.state.loadedPage) {
+      const loadingStyle = {
+        display: "block",
+        margin: "0px auto",
+        marginTop: "50%",
+        transform: "translateY(-50%)",
+        width: "30px"
+      }
+      return(
+        <img src="/images/loading.gif" style={loadingStyle} />
+      )
+    }
     return (
       <div className="content-container">
         <div className="column">
-          <ContentBox title={"Welcome, " + this.state.brotherName + " 👋"} height="7%" />
+          <ContentBox title={"Welcome, " + this.state.brotherData.firstName + " 👋"} height="7%" />
           <ContentBox title="Chapter Attendance 🙌" height="45%">
-            <Attendance data={this.state.brotherData} apiKey={this.state.apiKey} />
+            <Attendance data={this.state.brotherData} />
           </ContentBox>
           <ContentBox title="Brother Spotlight 🤠" height="40%">
             <Spotlight data={this.state.spotlightData} />
@@ -478,25 +501,7 @@ class Attendance extends React.Component {
   checkIn() {
     console.log("clicked");
     const url = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/attendance?api_key=" + this.props.apiKey;
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        "records": [
-          {
-            "fields": {
-              "Name": Cookies.get("token"),
-              "check-in-time": `2020-01-11T01:31:00.000Z`
-            }
-          }
-        ]
-      })
-    }).then(res => res.json())
-      .then((data) => {
-        console.log(data.records);
-      });
+    fetch(url);
   }
   render() {
     return (
