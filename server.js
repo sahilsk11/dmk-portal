@@ -10,7 +10,6 @@ app.use(bodyParser.json())
 
 app.listen(8080, () => {
   console.log("Server running on port 8080");
-  console.log(process.env.api_key);
 });
 
 app.post("/check_user", (req, res) => {
@@ -18,7 +17,6 @@ app.post("/check_user", (req, res) => {
   const username = req.query.username;
   const apiKey = process.env.api_key;
   let userToken;
-  let airtableCell;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + apiKey;
   request(baseURL, function (error, response, body) {
     console.log(response.statusCode);
@@ -65,7 +63,7 @@ app.post("/check_user", (req, res) => {
         res.json({ state: 'new_user', cellID: cellID });
       });
     }
-    //sendEmail(username, userToken)
+    sendEmail(username, userToken)
   })
 });
 
@@ -130,16 +128,83 @@ app.get("/add_name", (req, res) => {
   });
 })
 
-app.post("/api", (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.json({ apiKey: processe.env.apiKey });
-});
+app.get("/pageData", gatherAirtableData);
 
-app.post("/pageData", (req, res) => {
+function gatherAirtableData(req, res) {
   res.header("Access-Control-Allow-Origin", "*");
-  const apiKey = process.env.api_key;
-  console.log(apiKey);
-});
+  const username = req.query.username;
+  const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy";
+  let promises = [];
+  let response = {};
+  promises.push(new Promise(function(res, rej) {
+    const brotherData = getBrotherData(baseURL, username, res, rej)
+    return brotherData;
+  }));
+  promises.push(new Promise(function(res, rej) {
+    response.spotlightData = getBrotherSpotLight(baseURL, res);
+  }));
+  promises.push(new Promise(function(res, rej) {
+    response.upcomingData = getDataList(baseURL, "/upcoming", res);
+  }));
+  promises.push(new Promise(function(res, rej) {
+    response.newsData = getDataList(baseURL, "/news", res);
+  }));
+  promises.push(new Promise(function (res, rej) {
+    response.eventsData = getDataList(baseURL, "/events", res);
+  }));
+  Promise.all(promises).then(function(values) {
+    console.log(values);
+    res.json({ body: response });
+  })
+}
+
+async function getBrotherData(baseURL, username, resolve, reject) {
+  const route = "/brother_data?api_key=" + process.env.api_key;
+  request(baseURL + route, function (error, response, body) {
+    const airtableResp = JSON.parse(response.body);
+    var userFound = false
+    var i = 0;
+    while (!userFound && i < airtableResp.records.length) {
+      if (username === airtableResp.records[i].fields.username) {
+        resolve({
+          firstName: airtableResp.records[i].fields.first_name,
+          attendance: airtableResp.records[i].fields.attendance
+        });
+        return {
+          firstName: airtableResp.records[i].fields.first_name,
+          attendance: airtableResp.records[i].fields.attendance
+        }
+      }
+      i++;
+    }
+    return null;
+  });
+}
+function getDataList(baseURL, route, resolve) {
+  console.log(route)
+  const urlParams = "?api_key=" + process.env.api_key + "&sort%5B0%5D%5Bfield%5D=date&sort%5B0%5D%5Bdirection%5D=desc"
+  const url = baseURL + route + urlParams;
+  let dataList = [];
+  request(url, function (error, response, body) {
+    const airtableResp = JSON.parse(response.body);
+    for (let i = 0; i < airtableResp.records.length; i++) {
+      dataList.push(airtableResp.records[i].fields);
+    }
+    resolve(dataList);
+    console.log(dataList)
+    return dataList;
+  });
+}
+
+function getBrotherSpotLight(baseURL, resolve) {
+  const route = "/spotlight?api_key=" + process.env.api_key;
+  request(baseURL + route, function (error, response, body) {
+    const airtableResp = JSON.parse(response.body);
+    console.log("sending brother spotlight")
+    resolve(airtableResp.records[0].fields);
+    return airtableResp.records[0].fields;
+  });
+}
 
 function sendEmail(username, code) {
   const transporter = nodemailer.createTransport({

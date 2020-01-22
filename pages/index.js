@@ -405,110 +405,24 @@ class NavBar extends React.Component {
 class ContentContainer extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { apiKey: "", baseURL: "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy", eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, brotherName: "" }
+    this.state = { eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}}
   }
 
   componentDidMount() {
-    console.log("hi")
     if (Cookies.get("token") == undefined) {
       window.location = "/login"
+    } else {
+      this.setState({ username: Cookies.get("token")});
     }
     this.fetchPageData();
-    this.getEventData();
-    this.getNewsData();
-    this.getUpcomingData();
-    this.getSpotlightData();
-    this.getBrotherData();
-
   }
 
   fetchPageData() {
-    const url = "http://localhost:8080/pageData";
-    fetch(url, {
-      method: 'POST'
-    })
-  }
-
-  getBrotherData() {
-    const url = this.state.baseURL + "/brother_data?api_key=" + this.state.apiKey;
+    const url = "http://localhost:8080/pageData?username=" + Cookies.get("token");
     fetch(url).then(res => res.json())
-      .then((data) => {
-        var i = 0;
-        var found = false;
-        while (i < data.records.length && !found) {
-          if (Cookies.get("token") == data.records[i].fields.username) {
-            this.setState({ brotherData: data.records[i].fields, brotherName: data.records[i].fields["first_name"] });
-            found = true;
-          }
-          i++;
-        }
-        if (!found) {
-          alert("Hm, we couldn't find you in our system. Please log in again");
-          Cookies.remove("user");
-          window.location = "/login";
-        }
-        console.log(this.state.brotherData)
-      });
-  }
-
-  getSpotlightData() {
-    const url = this.state.baseURL + "/spotlight?api_key=" + this.state.apiKey;
-    fetch(url).then(res => res.json())
-      .then((data) => {
-        this.setState({ spotlightData: data.records[0].fields });
-      });
-  }
-
-  getUpcomingData() {
-    let upcomingData = [];
-    //random variables at the end are used to sort events
-    const url = this.state.baseURL + "/upcoming?api_key=" + this.state.apiKey + "&sort%5B0%5D%5Bfield%5D=date_added&sort%5B0%5D%5Bdirection%5D=desc";
-    fetch(url).then(res => res.json())
-      .then((data) => {
-        for (var i = 0; i < data.records.length; i++) {
-          upcomingData.push(data.records[i].fields);
-        }
-        this.setState({ upcomingData: upcomingData });
-      });
-  }
-
-  getNewsData() {
-    let newsData = [];
-    //random variables at the end are used to sort events
-    const url = this.state.baseURL + "/news?api_key=" + this.state.apiKey + "&sort%5B0%5D%5Bfield%5D=date_added&sort%5B0%5D%5Bdirection%5D=desc";
-    fetch(url).then(res => res.json())
-      .then((data) => {
-        for (var i = 0; i < data.records.length; i++) {
-          newsData.push(data.records[i].fields);
-        }
-        this.setState({ newsData: newsData });
-      });
-  }
-
-  getEventData() {
-    let eventsData = [];
-    //random variables at the end are used to sort events
-    const url = this.state.baseURL + "/events?api_key=" + this.state.apiKey + "&sort%5B0%5D%5Bfield%5D=date";
-    fetch(url).then(res => res.json())
-      .then((data) => {
-        for (var i = 0; i < data.records.length; i++) {
-          eventsData.push(data.records[i].fields);
-        }
-        this.setState({ eventsData: eventsData });
-      });
-  }
-
-  getEventData() {
-    let eventsData = [];
-    //random variables at the end are used to sort events
-    const url = this.state.baseURL + "/events?api_key=" + this.state.apiKey + "&sort%5B0%5D%5Bfield%5D=date";
-    fetch(url).then(res => res.json())
-      .then((data) => {
-        for (var i = 0; i < data.records.length; i++) {
-          eventsData.push(data.records[i].fields);
-        }
-        this.setState({ eventsData: eventsData });
-      });
+    .then((data) => {
+      console.log(data);
+    });
   }
 
   render() {
