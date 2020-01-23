@@ -137,34 +137,34 @@ function gatherAirtableData(req, res) {
   let promises = [];
   let response = {};
   promises.push(new Promise(function (res, rej) {
-      getBrotherData(baseURL, username, res, rej)
-    }).then(function(brotherData) {
-      response.brotherData = brotherData;
-    })
+    getBrotherData(baseURL, username, res, rej)
+  }).then(function (brotherData) {
+    response.brotherData = brotherData;
+  })
   );
   promises.push(new Promise(function (res, rej) {
-      getBrotherSpotLight(baseURL, res);
-    }).then(function(brotherSpotlight) {
-      response.brotherSpotlight = brotherSpotlight;
-    })
+    getBrotherSpotLight(baseURL, res);
+  }).then(function (brotherSpotlight) {
+    response.brotherSpotlight = brotherSpotlight;
+  })
   );
   promises.push(new Promise(function (res, rej) {
-      getDataList(baseURL, "/upcoming", res);
-    }).then(function(upcomingData) {
-      response.upcomingData = upcomingData;
-    })
+    getDataList(baseURL, "/upcoming", res);
+  }).then(function (upcomingData) {
+    response.upcomingData = upcomingData;
+  })
   );
   promises.push(new Promise(function (res, rej) {
-      getDataList(baseURL, "/news", res);
-    }).then(function (newsData) {
-      response.newsData = newsData;
-    })
+    getDataList(baseURL, "/news", res);
+  }).then(function (newsData) {
+    response.newsData = newsData;
+  })
   );
   promises.push(new Promise(function (res, rej) {
-      getDataList(baseURL, "/events", res);
-    }).then(function (eventsData) {
-      response.eventsData = eventsData;
-    })
+    getDataList(baseURL, "/events", res);
+  }).then(function (eventsData) {
+    response.eventsData = eventsData;
+  })
   );
   Promise.all(promises).then(function (values) {
     res.json({ body: response });
@@ -227,11 +227,21 @@ function sendEmail(username, code) {
       pass: process.env.email
     }
   });
+  const html = `
+  <h3 style="text-align: center;font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;">Your Login Code</h3>
+    <div style="display: block;margin: 0px auto;width: 200px;border-radius: 3px;background-color: #F1F1F1;font-family: monospace;">
+      <p style="text-align: center;padding: 20px;border-radius: 3px;background-color: #F1F1F1;font-family: monospace;">
+      ` + code + `
+    </p>
+  </div>
+  <br>
+  <p style="text-align:center;font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;">Make sure not to share this with anyone else!</p>
+  `
   const mailOptions = {
     from: 'dmk.purdue@gmail.com',
     to: username + '@purdue.edu',
     subject: 'DMK Portal Login',
-    text: 'Your login code is ' + code + '. Do not share this with anyone else.'
+    html: html
   };
   transporter.sendMail(mailOptions, function (error, info) {
     if (error) {

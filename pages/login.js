@@ -1,3 +1,5 @@
+import Head from 'next/head'
+
 class Index extends React.Component {
   constructor(props) {
     super(props);
@@ -17,8 +19,15 @@ class Index extends React.Component {
 
   checkUsername(event) {
     event.preventDefault();
-    this.setState({ loading: true })
     const username = this.state.inputValue;
+    if (username == "") {
+      alert("Please type in your username!")
+      return;
+    } else if (username.length > 10) {
+      alert("That's a little too long!")
+      return;
+    }
+    this.setState({ loading: true })
     const url = "http://localhost:8080/check_user?username=" + username;
     fetch(url, {
       method: 'POST'
@@ -40,6 +49,13 @@ class Index extends React.Component {
   authenticate(event) {
     event.preventDefault();
     const token = this.state.inputValue;
+    if (token == "") {
+      alert("Please type in your login token!")
+      return;
+    } else if (token.length > 10) {
+      alert("That's a little too long!")
+      return;
+    }
     const url = "http://localhost:8080/authenticate?username=" + this.state.username + "&token=" + token;
     fetch(url, {
       method: "POST"
@@ -53,19 +69,33 @@ class Index extends React.Component {
             window.location = "/";
           }
         } else {
-          this.setState({ displayState: "invalid_password" })
+          this.setState({ displayState: "invalidPassword" })
         }
       })
   }
 
   setFirstName(event) {
     event.preventDefault();
+    if (this.state.inputValue == "") {
+      alert("Please type in your name!")
+      return;
+    } else if (this.state.inputValue.length > 10) {
+      alert("That's a little too long!")
+      return;
+    }
     this.setState({ firstName: this.state.inputValue, inputValue: "", displayState: "newUserLastName" });
   }
 
   setLastName(event) {
     event.preventDefault();
     const lastName = this.state.inputValue;
+    if (lastName == "") {
+      alert("Please type in your last name!")
+      return;
+    } else if (lastName.length > 10) {
+      alert("That's a little too long!")
+      return;
+    }
     const url = "http://localhost:8080/add_name?cellID=" + this.state.cellID + "&firstName=" + this.state.firstName + "&lastName=" + lastName;
     fetch(url);
     document.cookie = "token=" + this.state.username + "; path=/";
@@ -98,6 +128,12 @@ class Index extends React.Component {
         onFormSubmit: this.setLastName,
         inputPlaceholder: "Who are your people?"
       },
+      invalidPassword: {
+        title: "Uh oh 😧",
+        subtitle: "That doesn't look right. Try copying the code exactly as it appears in the email.",
+        onFormSubmit: this.authenticate,
+        inputPlaceholder: "top secret..."
+      },
       error: {
         title: "Well, that's embarrassing 🙈",
         subtitle: "There's an error on our end. Try again later!",
@@ -109,6 +145,10 @@ class Index extends React.Component {
     const stateElements = pageStates[this.state.displayState];
     return (
       <div>
+        <Head>
+          <title>DMK Portal - Login</title>
+          <link href="/images/icon.png" rel="icon" />
+        </Head>
         <NavBar />
         {/*this.displayBox()*/}
         <ContentBox title={stateElements.title} subtitle={stateElements.subtitle}>
@@ -260,7 +300,7 @@ class Button extends React.Component {
     }
     if (this.props.loading) {
       return (
-        <img src="/images/loading.gif" style={loadingSyle} />
+        <img src="/images/loading-white.gif" style={loadingSyle} />
       )
     } else {
       return (

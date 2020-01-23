@@ -1,4 +1,5 @@
 import Cookies from 'js-cookie';
+import Head from 'next/head'
 
 class Index extends React.Component {
   render() {
@@ -8,6 +9,10 @@ class Index extends React.Component {
     }
     return (
       <div style={style}>
+        <Head>
+          <title>DMK Portal</title>
+          <link href="/images/icon.png" rel="icon" />
+        </Head>
         <NavBar />
         <ContentContainer />
         <style jsx global>
@@ -441,7 +446,7 @@ class ContentContainer extends React.Component {
       const loadingStyle = {
         display: "block",
         margin: "0px auto",
-        marginTop: "50%",
+        marginTop: "20%",
         transform: "translateY(-50%)",
         width: "30px"
       }
