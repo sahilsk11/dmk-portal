@@ -1,5 +1,6 @@
 import Cookies from 'js-cookie';
 import Head from 'next/head'
+import { Doughnut } from 'react-chartjs-2';
 
 class Index extends React.Component {
   render() {
@@ -389,7 +390,7 @@ class Index extends React.Component {
 
 class NavBar extends React.Component {
   logout() {
-    Cookies.remove("user");
+    Cookies.remove("token");
     window.location = "/login"
   }
   render() {
@@ -421,13 +422,13 @@ class ContentContainer extends React.Component {
     if (Cookies.get("token") == undefined) {
       window.location = "/login"
     } else {
-      this.setState({ username: Cookies.get("token")});
+      this.setState({ token: Cookies.get("token")});
     }
     this.fetchPageData();
   }
 
   fetchPageData() {
-    const url = "http://localhost:8080/pageData?username=" + Cookies.get("token");
+    const url = "http://localhost:8080/pageData?token=" + Cookies.get("token");
     fetch(url).then(res => res.json())
     .then((data) => {
       this.setState({
@@ -511,12 +512,43 @@ class Attendance extends React.Component {
   render() {
     return (
       <div>
-        <img src="/images/attendance.png" className="attendance-graph" />
+        {/*<img src="/images/attendance.png" className="attendance-graph" />*/}
         <p>We've seen you at {this.props.data.attendance} out of 5 chapters this semester.</p>
         <button onClick={() => this.checkIn()} className="check-in-btn">check in now</button>
 
       </div>
     );
+  }
+}
+
+class Graph extends React.Component {
+  render() {
+    const data = {
+      labels: [
+        'Red',
+        'Green',
+        'Yellow'
+      ],
+      datasets: [{
+        data: [300, 50, 100],
+        backgroundColor: [
+          '#FF6384',
+          '#36A2EB',
+          '#FFCE56'
+        ],
+        hoverBackgroundColor: [
+          '#FF6384',
+          '#36A2EB',
+          '#FFCE56'
+        ]
+      }]
+    };
+    return(
+      <div>
+        <h2>Doughnut Example</h2>
+        <Doughnut data={data} />
+      </div>
+    )
   }
 }
 

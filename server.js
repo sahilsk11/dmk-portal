@@ -86,7 +86,7 @@ app.post("/authenticate", (req, res) => {
     while (!userFound && i < airtableResp.records.length) {
       if (username === airtableResp.records[i].fields.username) {
         if (token == airtableResp.records[i].fields.auth) {
-          res.json({ authenticated: true, token: username });
+          res.json({ authenticated: true, token: token });
         } else {
           res.json({ authenticated: false, message: 'incorrect' });
         }
@@ -132,12 +132,12 @@ app.get("/pageData", gatherAirtableData);
 
 function gatherAirtableData(req, res) {
   res.header("Access-Control-Allow-Origin", "*");
-  const username = req.query.username;
+  const token = req.query.token;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy";
   let promises = [];
   let response = {};
   promises.push(new Promise(function (res, rej) {
-    getBrotherData(baseURL, username, res, rej)
+    getBrotherData(baseURL, token, res, rej)
   }).then(function (brotherData) {
     response.brotherData = brotherData;
   })
@@ -171,14 +171,14 @@ function gatherAirtableData(req, res) {
   })
 }
 
-async function getBrotherData(baseURL, username, resolve, reject) {
+async function getBrotherData(baseURL, token, resolve, reject) {
   const route = "/brother_data?api_key=" + process.env.api_key;
   request(baseURL + route, function (error, response, body) {
     const airtableResp = JSON.parse(response.body);
     var userFound = false
     var i = 0;
     while (!userFound && i < airtableResp.records.length) {
-      if (username === airtableResp.records[i].fields.username) {
+      if (token === airtableResp.records[i].fields.auth) {
         resolve({
           firstName: airtableResp.records[i].fields.first_name,
           attendance: airtableResp.records[i].fields.attendance
