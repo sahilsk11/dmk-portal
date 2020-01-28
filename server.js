@@ -17,6 +17,7 @@ app.get("/", (req, res) => {
 })
 
 app.post("/checkUser", (req, res) => {
+  console.log("/checkUser");
   res.header("Access-Control-Allow-Origin", "*");
   const username = req.query.username;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + process.env.api_key;
