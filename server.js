@@ -126,7 +126,7 @@ app.post("/authenticate", (req, res) => {
   });
 });
 
-app.get("healthcheck", (req, res) => {
+app.get("/healthcheck", (req, res) => {
   res.send("hello world");
 })
 
