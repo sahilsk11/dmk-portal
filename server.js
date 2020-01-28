@@ -16,7 +16,7 @@ app.use(function (req, res, next) {
   const env = process.env.NODE_ENV;
   console.log("NODE_ENV: " + env);
   if (env == "production")
-    res.setHeader('Access-Control-Allow-Origin', 'portal.dmkalpha.org');
+    res.setHeader('Access-Control-Allow-Origin', 'http://portal.dmkalpha.org');
   else
     res.setHeader('Access-Control-Allow-Origin', '*');
   next();
