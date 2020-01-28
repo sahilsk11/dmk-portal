@@ -39,7 +39,7 @@ class Index extends React.Component {
     this.setState({ username, loading: true })
 
     const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
-    const url = "http://" + host + "checkUser?username=" + username;
+    const url = "http://" + host + "/checkUser?username=" + username;
     fetch(url, {
       method: 'POST'
     }).then(response => response.json())
