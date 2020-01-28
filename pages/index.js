@@ -477,7 +477,6 @@ class ContentContainer extends React.Component {
           pageSettings: data.body.pageSettings,
           loadedPage: true
         });
-        console.log(this.state.pageSettings)
       });
   }
 
@@ -621,7 +620,6 @@ class CheckInForm extends React.Component {
   }
   setRating(rating) {
     this.setState({ chapterRating: rating });
-    console.log(this.state.chapterRating)
   }
   handleChange(event) {
     this.setState({ codeValue: event.target.value });
@@ -824,7 +822,6 @@ class NewsItem extends React.Component {
       window.open(this.props.data.link, "_blank")
     } else {
       this.toggleModal();
-      console.log(this.state.displayModal);
     }
   }
 

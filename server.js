@@ -14,9 +14,9 @@ app.listen(8080, () => {
 
 app.use(function (req, res, next) {
   const env = process.env.NODE_ENV;
-  console.log("NODE_ENV: " + env);
+  console.log(Date.now().toString() + ": NODE_ENV=" + env);
   if (env == "production")
-    res.setHeader('Access-Control-Allow-Origin', 'http://portal.dmkalpha.org');
+    res.setHeader('Access-Control-Allow-Origin', "http://portal.dmkalpha.org");
   else
     res.setHeader('Access-Control-Allow-Origin', '*');
   next();
@@ -55,17 +55,19 @@ app.get("/sendEmail", (req, res) => {
   const newUser = req.query.newUser;
   const cellID = req.query.cellID;
   let token;
-  if (newUser == "true") {
-    token = generateCode();
-    addUserToDatabase(username, firstName, lastName, token);
-  } else {
-    token = getUserToken(cellID);
-  }
-  sendEmail(username, token);
-  res.json({ success: true });
-})
+  new Promise(function (res, rej) {
+    if (newUser == "true") {
+      addUserToDatabase(username, firstName, lastName, generateCode(), res);
+    } else {
+      getUserToken(cellID, res);
+    }
+  }).then(function (token) {
+    sendEmail(username, token);
+    res.json({ success: true });
+  });
+});
 
-function addUserToDatabase(username, firstName, lastName, token) {
+function addUserToDatabase(username, firstName, lastName, token, resolve) {
   const apiKey = process.env.api_key;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + apiKey;
   const jsonString = {
@@ -86,11 +88,12 @@ function addUserToDatabase(username, firstName, lastName, token) {
     url: baseURL,
     json: jsonString,
   }, function (error, response, body) {
-    console.log("Added user to database");
+    resolve(token);
+    console.log(Date.now() + ": Added user to database");
   });
 }
 
-function getUserToken(cellID) {
+function getUserToken(cellID, resolve) {
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + process.env.api_key;
 
   request(baseURL, function (error, response, body) {
@@ -98,7 +101,8 @@ function getUserToken(cellID) {
     var i = 0;
     while (i < airtableResp.records.length) {
       if (cellID === airtableResp.records[i].id) {
-        return airtableResp.records[i].fields.token;
+        resolve(airtableResp.records[i].fields.token);
+        return;
       }
       i++;
     }
