@@ -12,13 +12,21 @@ app.listen(8080, () => {
   console.log("Server running on port 8080");
 });
 
+app.use(function (req, res, next) {
+  const env = process.env.NODE_ENV;
+  console.log("NODE_ENV: " + env);
+  if (env == "production")
+    res.setHeader('Access-Control-Allow-Origin', 'portal.dmkalpha.org');
+  else
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+});
+
 app.get("/", (req, res) => {
   res.send("Welcome to the DMK Portal server!\n");
 })
 
 app.post("/checkUser", (req, res) => {
-  console.log("/checkUser");
-  res.header("Access-Control-Allow-Origin", "*");
   const username = req.query.username;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + process.env.api_key;
 
@@ -41,7 +49,6 @@ app.post("/checkUser", (req, res) => {
 });
 
 app.get("/sendEmail", (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   const username = req.query.username;
   const firstName = req.query.firstName;
   const lastName = req.query.lastName;
@@ -100,7 +107,6 @@ function getUserToken(cellID) {
 }
 
 app.post("/authenticate", (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   const username = req.query.username;
   const token = req.query.token;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + process.env.api_key;
@@ -136,7 +142,6 @@ app.get("/healthcheck", (req, res) => {
 })
 
 app.get("/checkIn", (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   const code = req.query.code;
   const apiKey = process.env.api_key;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/page_settings?api_key=" + apiKey;
@@ -160,7 +165,6 @@ app.get("/checkIn", (req, res) => {
 app.get("/pageData", gatherAirtableData);
 
 function gatherAirtableData(req, res) {
-  res.header("Access-Control-Allow-Origin", "*");
   const token = req.query.token;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy";
   let promises = [];
@@ -216,10 +220,10 @@ function getBrotherData(baseURL, token, resolve, reject) {
           firstName: airtableResp.records[i].fields.firstName,
           attendance: airtableResp.records[i].fields.attendance
         });
+        return;
       }
       i++;
     }
-    console.error("ERROR: Token " + token + " not found.")
   });
 }
 function getDataList(baseURL, route, resolve) {

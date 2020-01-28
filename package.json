@@ -8,7 +8,7 @@
     "dev": "next",
     "build": "next build",
     "start": "next start",
-    "server": "nodemon server.js",
+    "server": "NODE_ENV=development nodemon server.js",
     "prod-server": "NODE_ENV=production node server.js"
   },
   "author": "",
