@@ -12,6 +12,10 @@ app.listen(8080, () => {
   console.log("Server running on port 8080");
 });
 
+app.get("/", (req, res) => {
+  res.send("Welcome to the DMK Portal server!\n");
+})
+
 app.post("/checkUser", (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
   const username = req.query.username;
