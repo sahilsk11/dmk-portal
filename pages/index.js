@@ -360,7 +360,10 @@ class Index extends React.Component {
               padding: 0;
             }
             .rate {
-              float: middle;
+              margin-top: 30px;
+              display: flex;
+              justify-content: center;
+              flex-direction: row-reverse;
               height: 46px;
               padding: 0 10px;
             }
@@ -448,7 +451,7 @@ class NavBar extends React.Component {
 class ContentContainer extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, loadedPage: false }
+    this.state = { eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, pageSettings: {}, loadedPage: false }
   }
 
   componentDidMount() {
@@ -470,8 +473,10 @@ class ContentContainer extends React.Component {
           newsData: data.body.newsData,
           eventsData: data.body.eventsData,
           brotherData: data.body.brotherData,
+          pageSettings: data.body.pageSettings,
           loadedPage: true
-        })
+        });
+        console.log(this.state.pageSettings)
       });
   }
 
@@ -493,7 +498,7 @@ class ContentContainer extends React.Component {
         <div className="column">
           <ContentBox title={"Welcome, " + this.state.brotherData.firstName + " 👋"} height="7%" />
           <ContentBox title="Chapter Attendance 🙌" height="45%">
-            <Attendance data={this.state.brotherData} checkInActive={true} />
+            <Attendance attendedChapters={this.state.brotherData.attendance} totalChapters={this.state.pageSettings.totalChapters} checkInActive={this.state.pageSettings.displayCheckIn} />
           </ContentBox>
           <ContentBox title="Brother Spotlight 🤠" height="40%">
             <Spotlight data={this.state.spotlightData} />
@@ -554,7 +559,7 @@ class Attendance extends React.Component {
       width: "100px",
       fontSize: "18px"
     }
-    if (this.props.checkInActive) {
+    if (this.props.checkInActive === 'true') {
       return (
         <div>
           <button onClick={() => this.toggleModal()} style={buttonStyle}>check in</button>
@@ -565,14 +570,14 @@ class Attendance extends React.Component {
       );
     } else {
       return (
-        <p style={descriptionStyle}>We've seen you at {this.props.data.attendance} out of 5 chapters this semester.</p>
+        <p style={descriptionStyle}>We've seen you at {this.props.attendedChapters} out of {this.props.totalChapters} chapters this semester.</p>
       );
     }
   }
   render() {
     return (
       <div>
-        <Graph attended={this.props.data.attendance} totalChapters="5" />
+        <Graph attended={this.props.attendedChapters} totalChapters={this.props.totalChapters} />
         {this.renderButton()}
       </div>
     );
@@ -582,21 +587,36 @@ class Attendance extends React.Component {
 class CheckInForm extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { displayState: "default", codeValue: "" };
+    this.state = { displayState: "default", codeValue: "", chapterRating: 0 };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.setRating = this.setRating.bind(this);
 
   }
   handleSubmit(event) {
     event.preventDefault();
-    const url = "http://localhost:8080/checkIn?token=" + Cookies.get("token") + "&code=" + this.state.codeValue;
+    const url = "http://localhost:8080/checkIn?token=" + Cookies.get("token") + "&code=" + this.state.codeValue + "&username=" + this.props.username;
     fetch(url).then(res => res.json())
       .then((data) => {
         this.setState({
           displayState: data.validCode ? "rateChapter" : "invalid"
         })
       });
+  }
+  handleSubmit(event) {
+    event.preventDefault();
+    const url = "http://localhost:8080/feedback?token=" + Cookies.get("token") + "&rating=" + this.state.chapterRating + "&username=" + this.props.username;
+    fetch(url).then(res => res.json())
+      .then((data) => {
+        this.setState({
+          displayState: data.validCode ? "rateChapter" : "invalid"
+        })
+      });
+  }
+  setRating(rating) {
+    this.setState({ chapterRating: rating });
+    console.log(this.state.chapterRating)
   }
   handleChange(event) {
     this.setState({ codeValue: event.target.value });
@@ -639,7 +659,6 @@ class CheckInForm extends React.Component {
         border: "none",
         borderRadius: "4px",
         marginBottom: "0px",
-        marginTop: "40px",
         padding: "10px"
       }
     }
@@ -670,9 +689,9 @@ class CheckInForm extends React.Component {
         <div>
           <h2 style={{ marginTop: "0px" }} className="modal-title">Thanks for coming today ✨</h2>
           <p style={styles.modalSubtitle} className="modal-text">How would you rate chapter today?</p>
-          <form onSubmit={this.handleSubmit}>
-            <RatingSystem />
-            <textarea style={styles.textInput} placeholder="I loved the..."></textarea>
+          <form onSubmit={this.sendFeedback}>
+            <RatingSystem setRating={this.setRating}/>
+            <textarea style={styles.textInput} placeholder="Feedback..."></textarea>
             <button style={styles.submitButtonStyle}>→</button>
           </form>
         </div>
@@ -691,17 +710,17 @@ class CheckInForm extends React.Component {
 class RatingSystem extends React.Component {
   render() {
     return (
-      <div class="rate">
-        <input type="radio" id="star5" name="rate" value="5" />
-        <label for="star5" title="text">5 stars</label>
-        <input type="radio" id="star4" name="rate" value="4" />
-        <label for="star4" title="text">4 stars</label>
-        <input type="radio" id="star3" name="rate" value="3" />
-        <label for="star3" title="text">3 stars</label>
-        <input type="radio" id="star2" name="rate" value="2" />
-        <label for="star2" title="text">2 stars</label>
-        <input type="radio" id="star1" name="rate" value="1" />
-        <label for="star1" title="text">1 star</label>
+      <div className="rate">
+        <input onClick={() => this.props.setRating(5)} type="radio" id="star5" name="rate" value="5" />
+        <label htmlFor="star5" title="text">5 stars</label>
+        <input onClick={() => this.props.setRating(4)} type="radio" id="star4" name="rate" value="4" />
+        <label htmlFor="star4" title="text">4 stars</label>
+        <input onClick={() => this.props.setRating(3)} type="radio" id="star3" name="rate" value="3" />
+        <label htmlFor="star3" title="text">3 stars</label>
+        <input onClick={() => this.props.setRating(2)} type="radio" id="star2" name="rate" value="2" />
+        <label htmlFor="star2" title="text">2 stars</label>
+        <input onClick={() => this.props.setRating(1)} type="radio" id="star1" name="rate" value="1" />
+        <label htmlFor="star1" title="text">1 star</label>
       </div>
     );
   }

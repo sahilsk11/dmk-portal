@@ -49,7 +49,7 @@ app.get("/sendEmail", (req, res) => {
   } else {
     token = getUserToken(cellID);
   }
-  //sendEmail(username, token);
+  sendEmail(username, token);
   res.json({ success: true });
 })
 
@@ -186,14 +186,18 @@ function gatherAirtableData(req, res) {
     getDataList(baseURL, "/events", res);
   }).then(function (eventsData) {
     response.eventsData = eventsData;
-  })
-  );
+  }));
+  promises.push(new Promise(function (res, rej) {
+    getPageSettings(baseURL, res);
+  }).then(function (pageSettings) {
+    response.pageSettings = pageSettings;
+  }));
   Promise.all(promises).then(function (values) {
     res.json({ body: response });
   })
 }
 
-async function getBrotherData(baseURL, token, resolve, reject) {
+function getBrotherData(baseURL, token, resolve, reject) {
   const route = "/brother_data?api_key=" + process.env.api_key;
   request(baseURL + route, function (error, response, body) {
     const airtableResp = JSON.parse(response.body);
@@ -221,7 +225,6 @@ function getDataList(baseURL, route, resolve) {
       dataList.push(airtableResp.records[i].fields);
     }
     resolve(dataList);
-    return dataList;
   });
 }
 
@@ -230,7 +233,17 @@ function getBrotherSpotLight(baseURL, resolve) {
   request(baseURL + route, function (error, response, body) {
     const airtableResp = JSON.parse(response.body);
     resolve(airtableResp.records[0].fields);
-    return airtableResp.records[0].fields;
+  });
+}
+
+function getPageSettings(baseURL, resolve) {
+  const route = "/page_settings?api_key=" + process.env.api_key;
+  request(baseURL + route, function (error, response, body) {
+    const airtableResp = JSON.parse(response.body);
+    resolve({
+      displayCheckIn: airtableResp.records[0].fields.value,
+      totalChapters: airtableResp.records[2].fields.value
+    });
   });
 }
 

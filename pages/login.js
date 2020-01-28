@@ -6,6 +6,7 @@ class Index extends React.Component {
     this.state = { displayState: "default", loading: false, inputValue: "", newUser: false, username: "", firstName: "" }
 
     this.handleChange = this.handleChange.bind(this);
+    this.skipEmail = this.skipEmail.bind(this);
     this.confirmedEmail = this.confirmedEmail.bind(this);
     this.authenticate = this.authenticate.bind(this);
     this.checkUsername = this.checkUsername.bind(this);
@@ -15,6 +16,11 @@ class Index extends React.Component {
 
   handleChange(event) {
     this.setState({ inputValue: event.target.value });
+  }
+
+  skipEmail() {
+    console.log("HI")
+    this.setState({ displayState: "authenticate" })
   }
 
   validateInput(inputValue) {
@@ -107,7 +113,7 @@ class Index extends React.Component {
     } else if (this.state.displayState == "setLastName") {
       return <InputContentBox title="...and last name 🎉" subtitle="No middle name please." onFormSubmit={this.setLastName} onChange={this.handleChange} inputValue={this.state.inputValue} placeholder="Who are your people?" loading={this.state.loading} />;
     } else if (this.state.displayState == "returningUser") {
-      return <DialogueBox title={"Welcome, " + this.state.firstName + " 🐶"} username={this.state.username} onSubmit={this.confirmedEmail} />
+      return <DialogueBox title={"Welcome, " + this.state.firstName + " 🐶"} username={this.state.username} onSubmit={this.confirmedEmail} skipEmail={this.skipEmail} displaySkip={!this.state.newUser} />
     } else if (this.state.displayState == "authenticate") {
       return <InputContentBox title="Identify Yourself 🔐" subtitle="You should have received your code via email." onFormSubmit={this.authenticate} onChange={this.handleChange} inputValue={this.state.inputValue} placeholder="Top secret" loading={this.state.loading} />;
     } else if (this.state.displayState == "invalidPassword") {
@@ -185,6 +191,18 @@ class ErrorBox extends React.Component {
 }
 
 class DialogueBox extends React.Component {
+  renderSkip() {
+    const anchorStyle = {
+      textAlign: 'center',
+      fontSize: "12px",
+      display: "block",
+      paddingBottom: "10px"
+    }
+    if (this.props.displaySkip) {
+      return <a style={anchorStyle} href="#" onClick={this.props.skipEmail}>I know my code</a>;
+    }
+  }
+
   render() {
     const anchorStyle = {
       textAlign: 'center',
@@ -192,12 +210,13 @@ class DialogueBox extends React.Component {
       display: "block",
       paddingBottom: "10px"
     }
+    
     return (
       <ContentBox title={this.props.title} subtitle={"We're sending your code to " + this.props.username + "@purdue.edu."}>
         <Button buttonText="Email me the code" fontSize="15" width="180" onClick={this.props.onSubmit} />
         <div style={{ marginTop: "40px" }}>
-          <a style={anchorStyle} href="#">I know my code</a>
-          <a style={anchorStyle} href="#">Oops - wrong email!</a>
+          {this.renderSkip()}
+          <a style={anchorStyle} href="#" onClick={() => location.reload()}>Oops - wrong email!</a>
         </div>
 
       </ContentBox>
