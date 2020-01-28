@@ -464,7 +464,8 @@ class ContentContainer extends React.Component {
   }
 
   fetchPageData() {
-    const url = "http://localhost:8080/pageData?token=" + Cookies.get("token");
+    const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
+    const url = "http://" + host + "/pageData?token=" + Cookies.get("token");
     fetch(url).then(res => res.json())
       .then((data) => {
         this.setState({
@@ -596,7 +597,9 @@ class CheckInForm extends React.Component {
   }
   handleSubmit(event) {
     event.preventDefault();
-    const url = "http://localhost:8080/checkIn?token=" + Cookies.get("token") + "&code=" + this.state.codeValue + "&username=" + this.props.username;
+
+    const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
+    const url = "http://" + host + "/checkIn?token=" + Cookies.get("token") + "&code=" + this.state.codeValue + "&username=" + this.props.username;
     fetch(url).then(res => res.json())
       .then((data) => {
         this.setState({
@@ -606,7 +609,9 @@ class CheckInForm extends React.Component {
   }
   handleSubmit(event) {
     event.preventDefault();
-    const url = "http://localhost:8080/feedback?token=" + Cookies.get("token") + "&rating=" + this.state.chapterRating + "&username=" + this.props.username;
+
+    const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
+    const url = "http://" + host + "/feedback?token=" + Cookies.get("token") + "&rating=" + this.state.chapterRating + "&username=" + this.props.username;
     fetch(url).then(res => res.json())
       .then((data) => {
         this.setState({
