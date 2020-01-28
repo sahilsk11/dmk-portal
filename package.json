@@ -6,7 +6,7 @@
   "keywords": [],
   "scripts": {
     "dev": "next",
-    "build": "next build",
+    "build": "next build && next export",
     "start": "next start",
     "server": "nodemon server.js"
   },
@@ -27,5 +27,6 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.2"
-  }
+  },
+  "homepage": "."
 }

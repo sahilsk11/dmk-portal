@@ -126,7 +126,9 @@ app.post("/authenticate", (req, res) => {
   });
 });
 
-
+app.get("healthcheck", (req, res) => {
+  res.send("hello world");
+})
 
 app.get("/checkIn", (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -148,7 +150,7 @@ app.get("/checkIn", (req, res) => {
       res.send({ validCode: false });
     }
   });
-})
+});
 
 app.get("/pageData", gatherAirtableData);
 
