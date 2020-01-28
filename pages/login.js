@@ -3,10 +3,10 @@ import Head from 'next/head'
 class Index extends React.Component {
   constructor(props) {
     super(props);
-    //this.state = { firstName: "", lastName: "", username: "", displayState: "entry", password: "", loading: false, newUser: false }
-    this.state = { displayState: "username", loading: false, inputValue: "", newUser: false, username: "" }
+    this.state = { displayState: "default", loading: false, inputValue: "", newUser: false, username: "", firstName: "" }
 
     this.handleChange = this.handleChange.bind(this);
+    this.confirmedEmail = this.confirmedEmail.bind(this);
     this.authenticate = this.authenticate.bind(this);
     this.checkUsername = this.checkUsername.bind(this);
     this.setFirstName = this.setFirstName.bind(this);
@@ -17,132 +17,107 @@ class Index extends React.Component {
     this.setState({ inputValue: event.target.value });
   }
 
-  checkUsername(event) {
-    event.preventDefault();
-    const username = this.state.inputValue;
-    if (username == "") {
+  validateInput(inputValue) {
+    if (inputValue == "") {
       alert("Please type in your username!")
       return;
-    } else if (username.length > 10) {
+    } else if (inputValue.length > 10) {
       alert("That's a little too long!")
       return;
     }
-    this.setState({ loading: true })
-    const url = "http://localhost:8080/check_user?username=" + username;
+  }
+
+  checkUsername(event) {
+    event.preventDefault();
+    const username = this.state.inputValue;
+    this.setState({ username, loading: true })
+
+    const url = "http://localhost:8080/checkUser?username=" + username;
     fetch(url, {
       method: 'POST'
     }).then(response => response.json())
       .then(data => {
-        this.setState({ 
-          displayState: data.state === "new_user" ? "emailVerification" : data.state,
+        this.setState({
+          displayState: data.state,
           cellID: data.cellID,
-          newUser: data.state === "new_user",
-          username,
           loading: false,
-          inputValue: ""
+          inputValue: "",
+          newUser: data.state === "newUser",
+          firstName: data.firstName
         });
       }).catch((error) => {
         this.setState({ displayState: "error" });
-      });;
+      });
+  }
+
+  setFirstName(event) {
+    event.preventDefault();
+    this.setState({ firstName: this.state.inputValue, inputValue: "", displayState: "setLastName" });
+  }
+
+  setLastName(event) {
+    event.preventDefault();
+    this.setState({ lastName: this.state.inputValue, inputValue: "", displayState: "returningUser" });
+  }
+
+  confirmedEmail() {
+    const username = this.state.username;
+    const firstName = this.state.firstName;
+    const lastName = this.state.lastName;
+    this.setState({ loading: true })
+
+    const url = "http://localhost:8080/sendEmail?username=" + username + "&firstName=" + firstName + "&lastName=" + lastName + "&newUser=" + this.state.newUser + "&cellID=" + this.state.cellID;
+    fetch(url).then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          this.setState({
+            displayState: "authenticate",
+            inputValue: "",
+            loading: false,
+          });
+        }
+      }).catch((error) => {
+        this.setState({ displayState: "error" });
+      });
   }
 
   authenticate(event) {
     event.preventDefault();
     const token = this.state.inputValue;
-    if (token == "") {
-      alert("Please type in your login token!")
-      return;
-    } else if (token.length > 10) {
-      alert("That's a little too long!")
-      return;
-    }
+
     const url = "http://localhost:8080/authenticate?username=" + this.state.username + "&token=" + token;
     fetch(url, {
       method: "POST"
     }).then(response => response.json())
       .then(data => {
         if (data.authenticated) {
-          if (this.state.newUser) {
-            this.setState({ displayState: "newUserFirstName", inputValue: "" });
-          } else {
-            document.cookie = "token=" + data.token + "; path=/";
-            window.location = "/";
-          }
+          document.cookie = "token=" + data.token + "; path=/";
+          window.location = "/";
         } else {
           this.setState({ displayState: "invalidPassword" })
         }
       })
   }
 
-  setFirstName(event) {
-    event.preventDefault();
-    if (this.state.inputValue == "") {
-      alert("Please type in your name!")
-      return;
-    } else if (this.state.inputValue.length > 10) {
-      alert("That's a little too long!")
-      return;
+  renderBasedOnState() {
+    if (this.state.displayState == "default") {
+      return <InputContentBox title="Hey There 👋" subtitle=" Welcome to the DMK Portal! Let's start with your Purdue username." onFormSubmit={this.checkUsername} onChange={this.handleChange} inputValue={this.state.inputValue} placeholder="Purdue username" loading={this.state.loading} />;
+    } else if (this.state.displayState == "newUser") {
+      return <InputContentBox title="You look new! 👀" subtitle="What's your first name?" onFormSubmit={this.setFirstName} onChange={this.handleChange} inputValue={this.state.inputValue} placeholder="What do you go by?" loading={this.state.loading} />;
+    } else if (this.state.displayState == "setLastName") {
+      return <InputContentBox title="...and last name 🎉" subtitle="No middle name please." onFormSubmit={this.setLastName} onChange={this.handleChange} inputValue={this.state.inputValue} placeholder="Who are your people?" loading={this.state.loading} />;
+    } else if (this.state.displayState == "returningUser") {
+      return <DialogueBox title={"Welcome, " + this.state.firstName + " 🐶"} username={this.state.username} onSubmit={this.confirmedEmail} />
+    } else if (this.state.displayState == "authenticate") {
+      return <InputContentBox title="Identify Yourself 🔐" subtitle="You should have received your code via email." onFormSubmit={this.authenticate} onChange={this.handleChange} inputValue={this.state.inputValue} placeholder="Top secret" loading={this.state.loading} />;
+    } else if (this.state.displayState == "invalidPassword") {
+      return <InputContentBox title="Not quite 😕" subtitle="That code is incorrect. Did you get caps right?" onFormSubmit={this.authenticate} onChange={this.handleChange} inputValue={this.state.inputValue} placeholder="Top secret" loading={this.state.loading} />;
+    } else {
+      return <ErrorBox />;
     }
-    this.setState({ firstName: this.state.inputValue, inputValue: "", displayState: "newUserLastName" });
-  }
-
-  setLastName(event) {
-    event.preventDefault();
-    const lastName = this.state.inputValue;
-    if (lastName == "") {
-      alert("Please type in your last name!")
-      return;
-    } else if (lastName.length > 10) {
-      alert("That's a little too long!")
-      return;
-    }
-    const url = "http://localhost:8080/add_name?cellID=" + this.state.cellID + "&firstName=" + this.state.firstName + "&lastName=" + lastName;
-    fetch(url);
-    document.cookie = "token=" + this.state.username + "; path=/";
-    window.location = "/";
   }
 
   render() {
-    const pageStates = {
-      username: {
-        title: "Hey There 👋",
-        subtitle: "Welcome to the DMK Portal! Let's start with your Purdue username.",
-        onFormSubmit: this.checkUsername,
-        inputPlaceholder: "Purdue Username"
-      },
-      emailVerification: {
-        title: "Check your email 📫",
-        subtitle: "Check your Purdue email for authentication (or continue if password saved).",
-        onFormSubmit: this.authenticate,
-        inputPlaceholder: "top secret..."
-      },
-      newUserFirstName: {
-        title: "You look new! 👀",
-        subtitle: "What's your first name?",
-        onFormSubmit: this.setFirstName,
-        inputPlaceholder: "What do you go by?"
-      },
-      newUserLastName: {
-        title: "...and last name 🎉",
-        subtitle: "No middle name please.",
-        onFormSubmit: this.setLastName,
-        inputPlaceholder: "Who are your people?"
-      },
-      invalidPassword: {
-        title: "Uh oh 😧",
-        subtitle: "That doesn't look right. Try copying the code exactly as it appears in the email.",
-        onFormSubmit: this.authenticate,
-        inputPlaceholder: "top secret..."
-      },
-      error: {
-        title: "Well, that's embarrassing 🙈",
-        subtitle: "There's an error on our end. Try again later!",
-        onFormSubmit: this.authenticate,
-        inputPlaceholder: "top secret...",
-        hideForm: true
-      }
-    }
-    const stateElements = pageStates[this.state.displayState];
     return (
       <div>
         <Head>
@@ -150,14 +125,7 @@ class Index extends React.Component {
           <link href="/images/icon.png" rel="icon" />
         </Head>
         <NavBar />
-        {/*this.displayBox()*/}
-        <ContentBox title={stateElements.title} subtitle={stateElements.subtitle}>
-          <form onSubmit={stateElements.onFormSubmit}>
-            <Input onChange={this.handleChange} value={this.state.inputValue} placeholder={stateElements.inputPlaceholder} hide={stateElements.hideForm} />
-            <Button loading={this.state.loading} hide={stateElements.hideForm} />
-          </form>
-        </ContentBox>
-        {/*Global CSS goes in here*/}
+        {this.renderBasedOnState()}
         <style jsx global>
           {`
             body {
@@ -192,6 +160,48 @@ class NavBar extends React.Component {
         <img src="/images/icon.png" style={navImgStyle} />
       </div>
     )
+  }
+}
+
+class InputContentBox extends React.Component {
+  render() {
+    return (
+      <ContentBox title={this.props.title} subtitle={this.props.subtitle}>
+        <form onSubmit={this.props.onFormSubmit}>
+          <Input onChange={this.props.onChange} value={this.props.inputValue} placeholder={this.props.placeholder} />
+          <Button loading={this.props.loading} buttonText="→" />
+        </form>
+      </ContentBox>
+    );
+  }
+}
+
+class ErrorBox extends React.Component {
+  render() {
+    return (
+      <ContentBox title="Well, that's embarrassing 🙈" subtitle="There's an error on our end. Try again later!" />
+    );
+  }
+}
+
+class DialogueBox extends React.Component {
+  render() {
+    const anchorStyle = {
+      textAlign: 'center',
+      fontSize: "12px",
+      display: "block",
+      paddingBottom: "10px"
+    }
+    return (
+      <ContentBox title={this.props.title} subtitle={"We're sending your code to " + this.props.username + "@purdue.edu."}>
+        <Button buttonText="Email me the code" fontSize="15" width="180" onClick={this.props.onSubmit} />
+        <div style={{ marginTop: "40px" }}>
+          <a style={anchorStyle} href="#">I know my code</a>
+          <a style={anchorStyle} href="#">Oops - wrong email!</a>
+        </div>
+
+      </ContentBox>
+    );
   }
 }
 
@@ -274,11 +284,11 @@ class Button extends React.Component {
   }
   render() {
     let buttonStyle = {
-      fontSize: "30px",
+      fontSize: this.props.fontSize == undefined ? "30px" : this.props.fontSize + "px",
       border: "none",
       backgroundColor: "rgb(191, 49, 56)",
       color: "white",
-      width: "100px",
+      width: this.props.width == undefined ? "100px" : this.props.width + "px",
       height: "40px",
       cursor: "pointer",
       outline: "none",
@@ -305,7 +315,7 @@ class Button extends React.Component {
     } else {
       return (
         <div>
-          <button onMouseLeave={() => this.toggleHover()} onMouseEnter={() => this.toggleHover()} style={buttonStyle} onClick={this.props.onClick}>→</button>
+          <button onMouseLeave={() => this.toggleHover()} onMouseEnter={() => this.toggleHover()} style={buttonStyle} onClick={this.props.onClick}>{this.props.buttonText}</button>
         </div>
       )
     }

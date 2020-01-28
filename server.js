@@ -12,71 +12,96 @@ app.listen(8080, () => {
   console.log("Server running on port 8080");
 });
 
-app.post("/check_user", (req, res) => {
+app.post("/checkUser", (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
   const username = req.query.username;
-  const apiKey = process.env.api_key;
-  let userToken;
-  const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + apiKey;
+  const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + process.env.api_key;
+
   request(baseURL, function (error, response, body) {
-    console.log(response.statusCode);
-    if (response == undefined) {
-      console.log("Undefined response from airtable in endpoint")
-      res.json({ state: 'connection_error' });
-      return;
-    }
     const airtableResp = JSON.parse(response.body);
-    var userFound = false
     var i = 0;
-    while (!userFound && i < airtableResp.records.length) {
-      console.log(username)
+    while (i < airtableResp.records.length) {
       if (username === airtableResp.records[i].fields.username) {
-        res.json({ state: 'emailVerification' });
-        userFound = true;
-        userToken = airtableResp.records[i].fields.auth;
+        res.json({
+          state: 'returningUser',
+          cellID: airtableResp.records[i].id,
+          firstName: airtableResp.records[i].fields.firstName
+        });
+        return;
       }
       i++;
     }
-    if (!userFound) {
-      console.log("Adding user to airtable");
-      userToken = generateCode();
-      console.log(username)
-      const jsonString = {
-        records: [
-          {
-            fields: {
-              username: username,
-              attendance: 0,
-              last_name: "",
-              first_name: "",
-              auth: userToken
-            }
-          }
-        ]
-      }
-      request({
-        method: 'POST',
-        url: baseURL,
-        json: jsonString
-      }, function (error, response, body) {
-        cellID = body.records[0].id;
-        res.json({ state: 'new_user', cellID: cellID });
-      });
-    }
-    sendEmail(username, userToken)
+    res.json({ state: 'newUser' });
   })
 });
+
+app.get("/sendEmail", (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  const username = req.query.username;
+  const firstName = req.query.firstName;
+  const lastName = req.query.lastName;
+  const newUser = req.query.newUser;
+  const cellID = req.query.cellID;
+  let token;
+  if (newUser == "true") {
+    token = generateCode();
+    addUserToDatabase(username, firstName, lastName, token);
+  } else {
+    token = getUserToken(cellID);
+  }
+  //sendEmail(username, token);
+  res.json({ success: true });
+})
+
+function addUserToDatabase(username, firstName, lastName, token) {
+  const apiKey = process.env.api_key;
+  const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + apiKey;
+  const jsonString = {
+    records: [
+      {
+        fields: {
+          username,
+          lastName,
+          firstName,
+          token,
+          attendance: 0
+        }
+      }
+    ]
+  }
+  request({
+    method: 'POST',
+    url: baseURL,
+    json: jsonString,
+  }, function (error, response, body) {
+    console.log("Added user to database");
+  });
+}
+
+function getUserToken(cellID) {
+  const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + process.env.api_key;
+
+  request(baseURL, function (error, response, body) {
+    const airtableResp = JSON.parse(response.body);
+    var i = 0;
+    while (i < airtableResp.records.length) {
+      if (cellID === airtableResp.records[i].id) {
+        return airtableResp.records[i].fields.token;
+      }
+      i++;
+    }
+    console.log("Token not found");
+  });
+}
 
 app.post("/authenticate", (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
   const username = req.query.username;
   const token = req.query.token;
-  const apiKey = process.env.api_key;
-  const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + apiKey;
+  const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + process.env.api_key;
   request(baseURL, function (error, response, body) {
-    console.log(response.statusCode);
     if (response == undefined) {
-      console.log("Undefined response from airtable in endpoint")
+      console.log("Undefined response from airtable in endpoint");
       res.json({ state: 'connection_error' });
       return;
     }
@@ -85,7 +110,8 @@ app.post("/authenticate", (req, res) => {
     var i = 0;
     while (!userFound && i < airtableResp.records.length) {
       if (username === airtableResp.records[i].fields.username) {
-        if (token == airtableResp.records[i].fields.auth) {
+        console.log(airtableResp.records[i].fields.token);
+        if (token == airtableResp.records[i].fields.token) {
           res.json({ authenticated: true, token: token });
         } else {
           res.json({ authenticated: false, message: 'incorrect' });
@@ -100,31 +126,27 @@ app.post("/authenticate", (req, res) => {
   });
 });
 
-app.get("/add_name", (req, res) => {
+
+
+app.get("/checkIn", (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
-  const firstName = req.query.firstName;
-  const lastName = req.query.lastName;
-  const cellID = req.query.cellID;
+  const code = req.query.code;
   const apiKey = process.env.api_key;
-  const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + apiKey;
-  const jsonString = {
-    records: [
-      {
-        id: cellID,
-        fields: {
-          last_name: lastName,
-          first_name: firstName,
-        }
-      }
-    ]
-  }
-  request({
-    method: 'PATCH',
-    url: baseURL,
-    json: jsonString,
-  }, function (error, response, body) {
-    console.log(body);
-    res.json({ sucess: true })
+  const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/page_settings?api_key=" + apiKey;
+  request(baseURL, function (error, response, body) {
+    if (response == undefined) {
+      console.log("Undefined response from airtable in endpoint")
+      res.json({ state: 'connection_error' });
+      return;
+    }
+    const actualCode = JSON.parse(response.body).records[1].fields.value;
+    console.log(code);
+    console.log(actualCode);
+    if (code == actualCode) {
+      res.send({ validCode: true })
+    } else {
+      res.send({ validCode: false });
+    }
   });
 })
 
@@ -178,23 +200,18 @@ async function getBrotherData(baseURL, token, resolve, reject) {
     var userFound = false
     var i = 0;
     while (!userFound && i < airtableResp.records.length) {
-      if (token === airtableResp.records[i].fields.auth) {
+      if (token === airtableResp.records[i].fields.token) {
         resolve({
-          firstName: airtableResp.records[i].fields.first_name,
+          firstName: airtableResp.records[i].fields.firstName,
           attendance: airtableResp.records[i].fields.attendance
         });
-        return {
-          firstName: airtableResp.records[i].fields.first_name,
-          attendance: airtableResp.records[i].fields.attendance
-        }
       }
       i++;
     }
-    return null;
+    console.error("ERROR: Token " + token + " not found.")
   });
 }
 function getDataList(baseURL, route, resolve) {
-  console.log(route)
   const urlParams = "?api_key=" + process.env.api_key + "&sort%5B0%5D%5Bfield%5D=date&sort%5B0%5D%5Bdirection%5D=desc"
   const url = baseURL + route + urlParams;
   let dataList = [];
@@ -204,7 +221,6 @@ function getDataList(baseURL, route, resolve) {
       dataList.push(airtableResp.records[i].fields);
     }
     resolve(dataList);
-    console.log(dataList)
     return dataList;
   });
 }
@@ -213,7 +229,6 @@ function getBrotherSpotLight(baseURL, resolve) {
   const route = "/spotlight?api_key=" + process.env.api_key;
   request(baseURL + route, function (error, response, body) {
     const airtableResp = JSON.parse(response.body);
-    console.log("sending brother spotlight")
     resolve(airtableResp.records[0].fields);
     return airtableResp.records[0].fields;
   });
@@ -257,7 +272,6 @@ function generateCode() {
   let code = "";
   for (var i = 0; i < length; i++) {
     const switchChar = Math.floor(Math.random() * 10);
-    console.log(switchChar);
     if (switchChar < 3) {
       //lowercase letter
       const ascii = Math.floor(Math.random() * 26) + 97;

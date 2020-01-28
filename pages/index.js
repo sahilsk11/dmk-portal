@@ -355,13 +355,46 @@ class Index extends React.Component {
               background-color: #AB1B23;
             }
 
-            .check-in-btn {
-              display: block;
-              margin: 0px auto;
-              margin-top: 40px;
-              height: 40px;
-              width: 140px;
+            *{
+              margin: 0;
+              padding: 0;
             }
+            .rate {
+              float: middle;
+              height: 46px;
+              padding: 0 10px;
+            }
+            .rate:not(:checked) > input {
+            position:absolute;
+          top:-9999px;
+      }
+.rate:not(:checked) > label {
+            float:right;
+          width:1em;
+          overflow:hidden;
+          white-space:nowrap;
+          cursor:pointer;
+          font-size:30px;
+          color:#ccc;
+      }
+.rate:not(:checked) > label:before {
+            content: '★ ';
+      }
+.rate > input:checked ~ label {
+            color: #ffc700;
+      }
+      .rate:not(:checked) > label:hover,
+.rate:not(:checked) > label:hover ~ label {
+            color: #deb217;
+      }
+      .rate > input:checked + label:hover,
+      .rate > input:checked + label:hover ~ label,
+      .rate > input:checked ~ label:hover,
+      .rate > input:checked ~ label:hover ~ label,
+.rate > label:hover ~ input:checked ~ label {
+            color: #c59b08;
+      }
+      
 
             @media only screen and (max-width: 790px) {
               .content-container {
@@ -415,14 +448,14 @@ class NavBar extends React.Component {
 class ContentContainer extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, loadedPage: false}
+    this.state = { eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, loadedPage: false }
   }
 
   componentDidMount() {
     if (Cookies.get("token") == undefined) {
       window.location = "/login"
     } else {
-      this.setState({ token: Cookies.get("token")});
+      this.setState({ token: Cookies.get("token") });
     }
     this.fetchPageData();
   }
@@ -430,16 +463,16 @@ class ContentContainer extends React.Component {
   fetchPageData() {
     const url = "http://localhost:8080/pageData?token=" + Cookies.get("token");
     fetch(url).then(res => res.json())
-    .then((data) => {
-      this.setState({
-        spotlightData: data.body.brotherSpotlight,
-        upcomingData: data.body.upcomingData,
-        newsData: data.body.newsData,
-        eventsData: data.body.eventsData,
-        brotherData: data.body.brotherData,
-        loadedPage: true
-      })
-    });
+      .then((data) => {
+        this.setState({
+          spotlightData: data.body.brotherSpotlight,
+          upcomingData: data.body.upcomingData,
+          newsData: data.body.newsData,
+          eventsData: data.body.eventsData,
+          brotherData: data.body.brotherData,
+          loadedPage: true
+        })
+      });
   }
 
   render() {
@@ -451,7 +484,7 @@ class ContentContainer extends React.Component {
         transform: "translateY(-50%)",
         width: "30px"
       }
-      return(
+      return (
         <img src="/images/loading.gif" style={loadingStyle} />
       )
     }
@@ -460,7 +493,7 @@ class ContentContainer extends React.Component {
         <div className="column">
           <ContentBox title={"Welcome, " + this.state.brotherData.firstName + " 👋"} height="7%" />
           <ContentBox title="Chapter Attendance 🙌" height="45%">
-            <Attendance data={this.state.brotherData} />
+            <Attendance data={this.state.brotherData} checkInActive={true} />
           </ContentBox>
           <ContentBox title="Brother Spotlight 🤠" height="40%">
             <Spotlight data={this.state.spotlightData} />
@@ -503,50 +536,211 @@ class ContentBox extends React.Component {
 class Attendance extends React.Component {
   constructor(props) {
     super(props);
+    this.state = { displayModal: false }
   }
-  checkIn() {
-    console.log("clicked");
-    const url = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/attendance?api_key=" + this.props.apiKey;
-    fetch(url);
+  toggleModal = () => {
+    this.setState({ displayModal: !this.state.displayModal });
+  }
+  renderButton() {
+    const descriptionStyle = {
+      marginTop: "30px",
+      marginBottom: "30px"
+    }
+    const buttonStyle = {
+      display: "block",
+      margin: "0px auto",
+      marginTop: "30px",
+      height: "30px",
+      width: "100px",
+      fontSize: "18px"
+    }
+    if (this.props.checkInActive) {
+      return (
+        <div>
+          <button onClick={() => this.toggleModal()} style={buttonStyle}>check in</button>
+          <Modal display={this.state.displayModal} closeModal={this.toggleModal}>
+            <CheckInForm />
+          </Modal>
+        </div>
+      );
+    } else {
+      return (
+        <p style={descriptionStyle}>We've seen you at {this.props.data.attendance} out of 5 chapters this semester.</p>
+      );
+    }
   }
   render() {
     return (
       <div>
-        {/*<img src="/images/attendance.png" className="attendance-graph" />*/}
-        <p>We've seen you at {this.props.data.attendance} out of 5 chapters this semester.</p>
-        <button onClick={() => this.checkIn()} className="check-in-btn">check in now</button>
+        <Graph attended={this.props.data.attendance} totalChapters="5" />
+        {this.renderButton()}
+      </div>
+    );
+  }
+}
 
+class CheckInForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { displayState: "default", codeValue: "" };
+
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+
+  }
+  handleSubmit(event) {
+    event.preventDefault();
+    const url = "http://localhost:8080/checkIn?token=" + Cookies.get("token") + "&code=" + this.state.codeValue;
+    fetch(url).then(res => res.json())
+      .then((data) => {
+        this.setState({
+          displayState: data.validCode ? "rateChapter" : "invalid"
+        })
+      });
+  }
+  handleChange(event) {
+    this.setState({ codeValue: event.target.value });
+  }
+  renderState() {
+    const styles = {
+      modalSubtitle: {
+        textAlign: "center"
+      },
+      inputStyle: {
+        border: "1px solid grey",
+        padding: "6px",
+        borderRadius: "4px",
+        fontSize: "14px",
+        display: "block",
+        margin: "20px auto",
+        textAlign: "center",
+        width: this.props.width
+      },
+      submitButtonStyle: {
+        fontSize: "20px",
+        border: "none",
+        backgroundColor: "rgb(191, 49, 56)",
+        color: "white",
+        width: "70px",
+        height: "30px",
+        cursor: "pointer",
+        outline: "none",
+        borderRadius: "4px",
+        display: "block",
+        margin: "0px auto",
+        marginTop: "30px"
+      },
+      textInput: {
+        backgroundColor: "rgb(242, 242, 242)",
+        resize: "none",
+        fontSize: "17px",
+        width: "92%",
+        height: "70px",
+        border: "none",
+        borderRadius: "4px",
+        marginBottom: "0px",
+        marginTop: "40px",
+        padding: "10px"
+      }
+    }
+    if (this.state.displayState == "default") {
+      return (
+        <div>
+          <h2 style={{ marginTop: "0px" }} className="modal-title">Check In</h2>
+          <p style={styles.modalSubtitle} className="modal-text">Please enter the code provided in chapter.</p>
+          <form onSubmit={this.handleSubmit}>
+            <input style={styles.inputStyle} onChange={this.handleChange} value={this.state.codeValue} onChange={this.handleChange} placeholder="" />
+            <button style={styles.submitButtonStyle}>→</button>
+          </form>
+        </div>
+      );
+    } else if (this.state.displayState == "invalid") {
+      return (
+        <div>
+          <h2 style={{ marginTop: "0px" }} className="modal-title">Not quite 😕</h2>
+          <p style={styles.modalSubtitle} className="modal-text">Did you spell it right?</p>
+          <form onSubmit={this.handleSubmit}>
+            <input style={styles.inputStyle} onChange={this.handleChange} value={this.state.codeValue} onChange={this.handleChange} placeholder="" />
+            <button style={styles.submitButtonStyle}>→</button>
+          </form>
+        </div>
+      );
+    } else if (this.state.displayState == "rateChapter") {
+      return (
+        <div>
+          <h2 style={{ marginTop: "0px" }} className="modal-title">Thanks for coming today ✨</h2>
+          <p style={styles.modalSubtitle} className="modal-text">How would you rate chapter today?</p>
+          <form onSubmit={this.handleSubmit}>
+            <RatingSystem />
+            <textarea style={styles.textInput} placeholder="I loved the..."></textarea>
+            <button style={styles.submitButtonStyle}>→</button>
+          </form>
+        </div>
+      );
+    }
+  }
+  render() {
+    return (
+      <div className="modal-text-wrapper">
+        {this.renderState()}
+      </div>
+    )
+  }
+}
+
+class RatingSystem extends React.Component {
+  render() {
+    return (
+      <div class="rate">
+        <input type="radio" id="star5" name="rate" value="5" />
+        <label for="star5" title="text">5 stars</label>
+        <input type="radio" id="star4" name="rate" value="4" />
+        <label for="star4" title="text">4 stars</label>
+        <input type="radio" id="star3" name="rate" value="3" />
+        <label for="star3" title="text">3 stars</label>
+        <input type="radio" id="star2" name="rate" value="2" />
+        <label for="star2" title="text">2 stars</label>
+        <input type="radio" id="star1" name="rate" value="1" />
+        <label for="star1" title="text">1 star</label>
       </div>
     );
   }
 }
 
 class Graph extends React.Component {
+  splitColors() {
+    return [parseInt(this.props.attended), parseInt(this.props.totalChapters) - parseInt(this.props.attended)];
+  }
   render() {
     const data = {
       labels: [
-        'Red',
-        'Green',
-        'Yellow'
+        'Attended',
+        'Missed'
       ],
       datasets: [{
-        data: [300, 50, 100],
+        data: this.splitColors(),
         backgroundColor: [
-          '#FF6384',
-          '#36A2EB',
-          '#FFCE56'
+          '#AF1E2B',
+          '#d6d6d6',
         ],
         hoverBackgroundColor: [
-          '#FF6384',
-          '#36A2EB',
-          '#FFCE56'
+          '#990A1B',
+          '#b5b5b5',
         ]
       }]
     };
-    return(
+    const options = {
+      legend: {
+        display: false
+      },
+      cutoutPercentage: 50
+    }
+    const graphContainerStyle = {
+
+    }
+    return (
       <div>
-        <h2>Doughnut Example</h2>
-        <Doughnut data={data} />
+        <Doughnut data={data} options={options} />
       </div>
     )
   }
