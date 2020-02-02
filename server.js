@@ -145,8 +145,8 @@ app.get("/healthcheck", (req, res) => {
   res.send("hello world");
 })
 
-app.get("/checkIn", (req, res) => {
-  const code = req.query.code;
+app.get("/validateCheckInCode", (req, res) => {
+  const checkInCode = req.query.checkInCode;
   const apiKey = process.env.api_key;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/page_settings?api_key=" + apiKey;
   request(baseURL, function (error, response, body) {
@@ -156,15 +156,76 @@ app.get("/checkIn", (req, res) => {
       return;
     }
     const actualCode = JSON.parse(response.body).records[1].fields.value;
-    console.log(code);
-    console.log(actualCode);
-    if (code == actualCode) {
+    if (checkInCode == actualCode) {
       res.send({ validCode: true })
     } else {
       res.send({ validCode: false });
     }
   });
 });
+
+app.get("/submitAttendance", (req, res) => {
+  const firstName = req.query.firstName;
+  const lastName = req.query.lastName;
+  const cellID = req.query.cellID;
+  const apiKey = process.env.api_key;
+  const rating = req.query.rating;
+  const feedback = req.query.feedback;
+  const date = new Date();
+  const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/attendance?api_key=" + apiKey;
+  const jsonString = {
+    records: [
+      {
+        fields: {
+          name: firstName + " " + lastName,
+          rating,
+          feedback,
+          date,
+        }
+      }
+    ]
+  }
+  request({
+    method: 'POST',
+    url: baseURL,
+    json: jsonString,
+  }, function (error, response, body) {
+    incrementAttenance(cellID);
+    res.send({ success: true })
+  });
+});
+
+function incrementAttenance(cellID) {
+  console.log("bouta print cellid")
+  console.log(cellID)
+  const getURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data/" + cellID + "?api_key=" + process.env.api_key;
+  const patchURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + process.env.api_key;
+  let currentAttendance;
+  request({
+    method: 'GET',
+    url: getURL,
+  }, function (error, response, body) {
+      currentAttendance = JSON.parse(response.body).fields.attendance;
+      const jsonBody = {
+        records: [
+          {
+            id: cellID,
+            fields: {
+              attendance: currentAttendance + 1
+            }
+          }
+        ]
+      }
+      request({
+        method: 'PATCH',
+        url: patchURL,
+        json: jsonBody,
+      }, function (error, response, body) {
+        return true;
+      });
+  });
+  
+}
 
 app.get("/pageData", gatherAirtableData);
 
@@ -220,9 +281,12 @@ function getBrotherData(baseURL, token, resolve, reject) {
     var i = 0;
     while (!userFound && i < airtableResp.records.length) {
       if (token === airtableResp.records[i].fields.token) {
+        console.log("cellid: " + airtableResp.records[i].id);
         resolve({
           firstName: airtableResp.records[i].fields.firstName,
-          attendance: airtableResp.records[i].fields.attendance
+          lastName: airtableResp.records[i].fields.lastName,
+          attendance: airtableResp.records[i].fields.attendance,
+          cellID: airtableResp.records[i].id
         });
         return;
       }

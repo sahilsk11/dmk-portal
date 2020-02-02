@@ -14,8 +14,8 @@ class Index extends React.Component {
           <title>DMK Portal</title>
           <link href="/images/icon.png" rel="icon" />
         </Head>
-        <NavBar />
-        <ContentContainer />
+        <NavBar /> {/* Component for the top navbar with icon and logout */}
+        <PageContent /> {/* Component that contains content for the page */}
         <style jsx global>
           {`
             body {
@@ -448,10 +448,10 @@ class NavBar extends React.Component {
   }
 }
 
-class ContentContainer extends React.Component {
+class PageContent extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, pageSettings: {}, loadedPage: false }
+    this.state = { eventsData: [], newsData: [], upcomingData: [], spotlightData: {}, brotherData: {}, pageSettings: {}, loadedPage: false, cellID: '' }
   }
 
   componentDidMount() {
@@ -475,12 +475,14 @@ class ContentContainer extends React.Component {
           eventsData: data.body.eventsData,
           brotherData: data.body.brotherData,
           pageSettings: data.body.pageSettings,
-          loadedPage: true
+          loadedPage: true,
+          cellID: data.body.brotherData.cellID
         });
       });
   }
 
   render() {
+    //if the page has not loaded yet, display the loading gif
     if (!this.state.loadedPage) {
       const loadingStyle = {
         display: "block",
@@ -496,36 +498,36 @@ class ContentContainer extends React.Component {
     return (
       <div className="content-container">
         <div className="column">
-          <ContentBox title={"Welcome, " + this.state.brotherData.firstName + " 👋"} height="7%" />
-          <ContentBox title="Chapter Attendance 🙌" height="45%">
-            <Attendance attendedChapters={this.state.brotherData.attendance} totalChapters={this.state.pageSettings.totalChapters} checkInActive={this.state.pageSettings.displayCheckIn} />
-          </ContentBox>
-          <ContentBox title="Brother Spotlight 🤠" height="40%">
+          <TileBox title={"Welcome, " + this.state.brotherData.firstName + " 👋"} height="7%" />
+          <TileBox title="Chapter Attendance 🙌" height="45%">
+            <Attendance attendedChapters={this.state.brotherData.attendance} totalChapters={this.state.pageSettings.totalChapters} checkInActive={this.state.pageSettings.displayCheckIn} firstName={this.state.brotherData.firstName} lastName={this.state.brotherData.lastName} cellID={this.state.cellID} />
+          </TileBox>
+          <TileBox title="Brother Spotlight 🤠" height="40%">
             <Spotlight data={this.state.spotlightData} />
-          </ContentBox>
+          </TileBox>
         </div>
         <div className="column">
-          <ContentBox title="Coming Up ⚡️" height="44.7%">
+          <TileBox title="Coming Up ⚡️" height="44.7%">
             <NewsList data={this.state.upcomingData} />
-          </ContentBox>
-          <ContentBox title="News Panel 📰" height="50%">
+          </TileBox>
+          <TileBox title="News Panel 📰" height="50%">
             <NewsList data={this.state.newsData} />
-          </ContentBox>
+          </TileBox>
         </div>
         <div className="column">
-          <ContentBox title="Upcoming Events 📣" height="67.7%">
+          <TileBox title="Upcoming Events 📣" height="67.7%">
             <EventsList data={this.state.eventsData} />
-          </ContentBox>
-          <ContentBox title="Drop us a Line 🤖" height="27%">
+          </TileBox>
+          <TileBox title="Drop us a Line 🤖" height="27%">
             <Slack />
-          </ContentBox>
+          </TileBox>
         </div>
       </div>
     )
   }
 }
 
-class ContentBox extends React.Component {
+class TileBox extends React.Component {
   render() {
     return (
       <div className="content-box" style={{ "height": this.props.height }}>
@@ -559,12 +561,14 @@ class Attendance extends React.Component {
       width: "100px",
       fontSize: "18px"
     }
+    //display the button for check in
     if (this.props.checkInActive === 'true') {
+      console.log("cellID" + this.props.cellID)
       return (
         <div>
           <button onClick={() => this.toggleModal()} style={buttonStyle}>check in</button>
           <Modal display={this.state.displayModal} closeModal={this.toggleModal}>
-            <CheckInForm />
+            <CheckInContent close={this.toggleModal} firstName={this.props.firstName} lastName={this.props.lastName} cellID={this.props.cellID} />
           </Modal>
         </div>
       );
@@ -584,119 +588,123 @@ class Attendance extends React.Component {
   }
 }
 
-class CheckInForm extends React.Component {
+class Modal extends React.Component {
+  render() {
+    if (this.props.display) {
+      return (
+        <div id={this.props.id} className="modal">
+          <div className="modal-content">
+            <span className="close" onClick={this.props.closeModal}>&times;</span>
+            {this.props.children}
+          </div>
+        </div>
+      )
+    } else {
+      return null;
+    }
+  }
+}
+
+class CheckInContent extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { displayState: "default", codeValue: "", chapterRating: 0 };
+    this.state = { displayState: "default", inputValue: "", chapterRating: 0 };
 
     this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
+    this.validateCheckInCode = this.validateCheckInCode.bind(this);
     this.setRating = this.setRating.bind(this);
-
+    this.checkIn = this.checkIn.bind(this);
   }
-  handleSubmit(event) {
+  validateCheckInCode(event) {
     event.preventDefault();
-
+    const urlParams = {
+      checkInCode: this.state.inputValue,
+      token: Cookies.get("token"),
+      username: this.props.username
+    }
     const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
-    const url = "http://" + host + "/checkIn?token=" + Cookies.get("token") + "&code=" + this.state.codeValue + "&username=" + this.props.username;
-    fetch(url).then(res => res.json())
-      .then((data) => {
-        this.setState({
-          displayState: data.validCode ? "rateChapter" : "invalid"
-        })
+    const url = "http://" + host + "/validateCheckInCode" + this.stringifyURLParams(urlParams);
+    fetch(url).then(res => res.json()).then((data) => {
+      this.setState({
+        displayState: data.validCode ? "rateChapter" : "invalid",
+        inputValue: ""
       });
+    });
   }
-  handleSubmit(event) {
-    event.preventDefault();
 
+  checkIn(event) {
+    event.preventDefault();
+    const urlParams = {
+      firstName: this.props.firstName,
+      lastName: this.props.lastName,
+      rating: this.state.chapterRating,
+      feedback: this.state.inputValue,
+      cellID: this.props.cellID
+    }
     const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
-    const url = "http://" + host + "/feedback?token=" + Cookies.get("token") + "&rating=" + this.state.chapterRating + "&username=" + this.props.username;
-    fetch(url).then(res => res.json())
-      .then((data) => {
-        this.setState({
-          displayState: data.validCode ? "rateChapter" : "invalid"
-        })
+    const url = "http://" + host + "/submitAttendance" + this.stringifyURLParams(urlParams);
+    fetch(url).then(res => res.json()).then((data) => {
+      this.setState({
+        displayState: data.success ? "complete" : "error"
       });
+    });
+  }
+
+  stringifyURLParams(urlParams) {
+    let urlStr = "?";
+    var queryString = Object.keys(urlParams).map(key => key + '=' + urlParams[key]).join('&');
+    return urlStr + queryString;
   }
   setRating(rating) {
     this.setState({ chapterRating: rating });
   }
   handleChange(event) {
-    this.setState({ codeValue: event.target.value });
+    this.setState({ inputValue: event.target.value });
   }
   renderState() {
-    const styles = {
-      modalSubtitle: {
-        textAlign: "center"
-      },
-      inputStyle: {
-        border: "1px solid grey",
-        padding: "6px",
-        borderRadius: "4px",
-        fontSize: "14px",
-        display: "block",
-        margin: "20px auto",
-        textAlign: "center",
-        width: this.props.width
-      },
-      submitButtonStyle: {
-        fontSize: "20px",
-        border: "none",
-        backgroundColor: "rgb(191, 49, 56)",
-        color: "white",
-        width: "70px",
-        height: "30px",
-        cursor: "pointer",
-        outline: "none",
-        borderRadius: "4px",
-        display: "block",
-        margin: "0px auto",
-        marginTop: "30px"
-      },
-      textInput: {
-        backgroundColor: "rgb(242, 242, 242)",
-        resize: "none",
-        fontSize: "17px",
-        width: "92%",
-        height: "70px",
-        border: "none",
-        borderRadius: "4px",
-        marginBottom: "0px",
-        padding: "10px"
-      }
+    const modalSubtitle = {
+      textAlign: "center"
+    }
+    const submitButtonStyle = {
+      fontSize: "20px",
+      border: "none",
+      backgroundColor: "rgb(191, 49, 56)",
+      color: "white",
+      width: "70px",
+      height: "30px",
+      cursor: "pointer",
+      outline: "none",
+      borderRadius: "4px",
+      display: "block",
+      margin: "0px auto",
+      marginTop: "30px"
     }
     if (this.state.displayState == "default") {
-      return (
-        <div>
-          <h2 style={{ marginTop: "0px" }} className="modal-title">Check In</h2>
-          <p style={styles.modalSubtitle} className="modal-text">Please enter the code provided in chapter.</p>
-          <form onSubmit={this.handleSubmit}>
-            <input style={styles.inputStyle} onChange={this.handleChange} value={this.state.codeValue} onChange={this.handleChange} placeholder="" />
-            <button style={styles.submitButtonStyle}>→</button>
-          </form>
-        </div>
-      );
+      return <InputForm title="Check In" subtitle="Please enter the code provided in chapter" onSubmit={this.validateCheckInCode} onChange={this.handleChange} inputValue={this.state.inputValue} />
     } else if (this.state.displayState == "invalid") {
-      return (
-        <div>
-          <h2 style={{ marginTop: "0px" }} className="modal-title">Not quite 😕</h2>
-          <p style={styles.modalSubtitle} className="modal-text">Did you spell it right?</p>
-          <form onSubmit={this.handleSubmit}>
-            <input style={styles.inputStyle} onChange={this.handleChange} value={this.state.codeValue} onChange={this.handleChange} placeholder="" />
-            <button style={styles.submitButtonStyle}>→</button>
-          </form>
-        </div>
-      );
+      return <InputForm title="Not quite 😕" subtitle="Did you spell it right?" onSubmit={this.validateCheckInCode} onChange={this.handleChange} inputValue={this.state.inputValue} />
     } else if (this.state.displayState == "rateChapter") {
       return (
+        <InputForm title="One last thing..." subtitle="How would you rate chapter today?" onSubmit={this.checkIn} onChange={this.handleChange} inputValue={this.state.inputValue} inputType="textarea">
+          <RatingSystem setRating={this.setRating} />
+        </InputForm>
+      );
+    } else if (this.state.displayState == "complete") {
+      return (
         <div>
-          <h2 style={{ marginTop: "0px" }} className="modal-title">Thanks for coming today ✨</h2>
-          <p style={styles.modalSubtitle} className="modal-text">How would you rate chapter today?</p>
-          <form onSubmit={this.sendFeedback}>
-            <RatingSystem setRating={this.setRating}/>
-            <textarea style={styles.textInput} placeholder="Feedback..."></textarea>
-            <button style={styles.submitButtonStyle}>→</button>
-          </form>
+          <br />
+          <h2 style={{ marginTop: "0px" }} className="modal-title">Thanks for coming ❤️</h2>
+          <p style={modalSubtitle} className="modal-text">See you next week!</p>
+          <button onClick={() => { location.reload() }} style={submitButtonStyle}>close</button>
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <br />
+          <h2 style={{ marginTop: "0px" }} className="modal-title">That's an error!</h2>
+          <p style={modalSubtitle} className="modal-text">Check in with an e-board member for attendance.</p>
+          <button onClick={() => { this.props.close() }} style={submitButtonStyle}>close</button>
         </div>
       );
     }
@@ -707,6 +715,67 @@ class CheckInForm extends React.Component {
         {this.renderState()}
       </div>
     )
+  }
+}
+
+class InputForm extends React.Component {
+  renderInputType() {
+    const inputStyle = {
+      border: "1px solid grey",
+      padding: "6px",
+      borderRadius: "4px",
+      fontSize: "14px",
+      display: "block",
+      margin: "20px auto",
+      textAlign: "center",
+      width: this.props.width
+    }
+    const textInput = {
+      backgroundColor: "rgb(242, 242, 242)",
+      resize: "none",
+      fontSize: "17px",
+      width: "92%",
+      height: "70px",
+      border: "none",
+      borderRadius: "4px",
+      marginBottom: "0px",
+      padding: "10px"
+    }
+    if (this.props.inputType == "textarea") {
+      return <textarea style={textInput} placeholder="Feedback..." onChange={this.props.onChange} value={this.props.inputValue}></textarea>
+    } else {
+      return <input style={inputStyle} onChange={this.props.onChange} value={this.props.inputValue} onChange={this.props.onChange} />
+    }
+  }
+  render() {
+    const submitButtonStyle = {
+      fontSize: "20px",
+      border: "none",
+      backgroundColor: "rgb(191, 49, 56)",
+      color: "white",
+      width: "70px",
+      height: "30px",
+      cursor: "pointer",
+      outline: "none",
+      borderRadius: "4px",
+      display: "block",
+      margin: "0px auto",
+      marginTop: "30px"
+    }
+    const modalSubtitle = {
+      textAlign: "center"
+    }
+    return (
+      <div>
+        <h2 style={{ marginTop: "0px" }} className="modal-title">{this.props.title}</h2>
+        <p style={modalSubtitle} className="modal-text">{this.props.subtitle}</p>
+        {this.props.children}
+        <form onSubmit={this.props.onSubmit}>
+          {this.renderInputType()}
+          <button style={submitButtonStyle}>→</button>
+        </form>
+      </div>
+    );
   }
 }
 
@@ -728,6 +797,8 @@ class RatingSystem extends React.Component {
     );
   }
 }
+
+
 
 class Graph extends React.Component {
   splitColors() {
@@ -864,23 +935,6 @@ class NewsItem extends React.Component {
         {this.renderImage()}
       </div>
     );
-  }
-}
-
-class Modal extends React.Component {
-  render() {
-    if (this.props.display) {
-      return (
-        <div id={this.props.id} className="modal">
-          <div className="modal-content">
-            <span className="close" onClick={this.props.closeModal}>&times;</span>
-            {this.props.children}
-          </div>
-        </div>
-      )
-    } else {
-      return null;
-    }
   }
 }
 
