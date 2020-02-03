@@ -63,7 +63,7 @@ class Index extends React.Component {
               display: block;
               margin: 0px auto;
               margin-top: 20px;
-              overflow: scroll;
+              overflow: hidden;
             }
 
             .box-title {
@@ -499,10 +499,10 @@ class PageContent extends React.Component {
       <div className="content-container">
         <div className="column">
           <TileBox title={"Welcome, " + this.state.brotherData.firstName + " 👋"} height="7%" />
-          <TileBox title="Chapter Attendance 🙌" height="45%">
+          <TileBox title="Chapter Attendance 🙌" height="40%">
             <Attendance attendedChapters={this.state.brotherData.attendance} totalChapters={this.state.pageSettings.totalChapters} checkInActive={this.state.pageSettings.displayCheckIn} firstName={this.state.brotherData.firstName} lastName={this.state.brotherData.lastName} cellID={this.state.cellID} />
           </TileBox>
-          <TileBox title="Brother Spotlight 🤠" height="40%">
+          <TileBox title="Brother Spotlight 🤠" height="45%">
             <Spotlight data={this.state.spotlightData} />
           </TileBox>
         </div>
@@ -556,10 +556,10 @@ class Attendance extends React.Component {
     const buttonStyle = {
       display: "block",
       margin: "0px auto",
-      marginTop: "30px",
+      marginTop: "7%",
       height: "30px",
       width: "100px",
-      fontSize: "18px"
+      fontSize: "18px",
     }
     //display the button for check in
     if (this.props.checkInActive === 'true') {
