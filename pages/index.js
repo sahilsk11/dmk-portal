@@ -518,8 +518,13 @@ class PageContent extends React.Component {
           <TileBox title="Upcoming Events 📣" height="67.7%">
             <EventsList data={this.state.eventsData} />
           </TileBox>
-          <TileBox title="Drop us a Line 🤖" height="27%">
+          {/*<TileBox title="Drop us a Line 🤖" height="27%">
             <Slack />
+          </TileBox>*/}
+          <TileBox title="Coming soon 🤩" height="27%">
+            <p>
+              This content isn't available yet!
+            </p>
           </TileBox>
         </div>
       </div>
@@ -659,7 +664,11 @@ class CheckInContent extends React.Component {
     this.setState({ chapterRating: rating });
   }
   handleChange(event) {
-    this.setState({ inputValue: event.target.value });
+    if (event.target.value.length < 300) {
+      this.setState({ inputValue: event.target.value });
+    } else {
+      alert("Please keep your response under 300 characters.")
+    }
   }
   renderState() {
     const modalSubtitle = {
