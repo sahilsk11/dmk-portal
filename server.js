@@ -37,7 +37,7 @@ app.post("/checkUser", (req, res) => {
     while (i < airtableResp.records.length) {
       if (username === airtableResp.records[i].fields.username) {
         const knownFingerprints = airtableResp.records[i].fields.fingerprints;
-        if (airtableResp.records[i].fields.knownFingerprints.includes(fingerprint)) {
+        if (airtableResp.records[i].fields.knownFingerprints != undefined && airtableResp.records[i].fields.knownFingerprints.includes(fingerprint)) {
           /**
            * USER FINGERPRINT MATCHES
            */
@@ -128,6 +128,8 @@ function getUserToken(cellID, resolve) {
 app.post("/authenticate", (req, res) => {
   const username = req.query.username;
   const token = req.query.token;
+  const fingerprint = req.query.fingerprint;
+  const cellID = req.query.cellID;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + process.env.api_key;
   request(baseURL, function (error, response, body) {
     if (response == undefined) {
@@ -143,6 +145,7 @@ app.post("/authenticate", (req, res) => {
         console.log(airtableResp.records[i].fields.token);
         if (token == airtableResp.records[i].fields.token) {
           res.json({ authenticated: true, token: token });
+          addFingerprint(cellID, fingerprint);
         } else {
           res.json({ authenticated: false, message: 'incorrect' });
         }
@@ -155,6 +158,42 @@ app.post("/authenticate", (req, res) => {
     }
   });
 });
+
+function addFingerprint(cellID, fingerprint) {
+  const getURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data/" + cellID + "?api_key=" + process.env.api_key;
+
+  const patchURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + process.env.api_key;
+
+  let fingerprints;
+
+  request({
+    method: 'GET',
+    url: getURL,
+  }, function (error, response, body) {
+    fingerprints = JSON.parse(response.body).fields.knownFingerprints;
+    if (fingerprints == undefined) {
+      fingerprints = [];
+    }
+    fingerprints.push(fingerprint);
+    const jsonBody = {
+      records: [
+        {
+          id: cellID,
+          fields: {
+            knownFingerprints: fingerprints
+          }
+        }
+      ]
+    }
+    request({
+      method: 'PATCH',
+      url: patchURL,
+      json: jsonBody,
+    }, function (error, response, body) {
+      return true;
+    });
+  });
+}
 
 app.get("/healthcheck", (req, res) => {
   res.send("hello world");
@@ -211,8 +250,6 @@ app.get("/submitAttendance", (req, res) => {
 });
 
 function incrementAttenance(cellID) {
-  console.log("bouta print cellid")
-  console.log(cellID)
   const getURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data/" + cellID + "?api_key=" + process.env.api_key;
   const patchURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + process.env.api_key;
   let currentAttendance;

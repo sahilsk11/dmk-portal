@@ -102,7 +102,7 @@ class Index extends React.Component {
 
 
     const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
-    const url = "http://" + host + "/authenticate?username=" + this.state.username + "&token=" + token;
+    const url = "http://" + host + "/authenticate?username=" + this.state.username + "&token=" + token + "&fingerprint=" + this.state.fingerprint + "&cellID=" + this.state.cellID;
     fetch(url, {
       method: "POST"
     }).then(response => response.json())

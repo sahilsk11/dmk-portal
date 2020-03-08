@@ -567,7 +567,7 @@ class Attendance extends React.Component {
       fontSize: "18px",
     }
     //display the button for check in
-    if (this.props.checkInActive === 'true') {
+    if (this.props.checkInActive === 'true' && Cookies.get("check-in") != new Date().toLocaleDateString()) {
       console.log("cellID" + this.props.cellID)
       return (
         <div>
@@ -648,10 +648,18 @@ class CheckInContent extends React.Component {
     }
     const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
     const url = "http://" + host + "/submitAttendance" + this.stringifyURLParams(urlParams);
+
+    let date = new Date().toLocaleDateString();
+    if (Cookies.get("check-in") == date) {
+      this.setState({ displayState: "blocked" });
+      return;
+    }
+
     fetch(url).then(res => res.json()).then((data) => {
       this.setState({
         displayState: data.success ? "complete" : "error"
       });
+      document.cookie = "check-in=" + date + "; path=/";
     });
   }
 
@@ -712,7 +720,7 @@ class CheckInContent extends React.Component {
         <div>
           <br />
           <h2 style={{ marginTop: "0px" }} className="modal-title">That's an error!</h2>
-          <p style={modalSubtitle} className="modal-text">Check in with an e-board member for attendance.</p>
+          <p style={modalSubtitle} className="modal-text">Either you've attempted to check in too many times, or there's an error.</p>
           <button onClick={() => { this.props.close() }} style={submitButtonStyle}>close</button>
         </div>
       );
