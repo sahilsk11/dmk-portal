@@ -1,9 +1,10 @@
 import Head from 'next/head'
+import Fingerprint2 from 'fingerprintjs2';
 
 class Index extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { displayState: "default", loading: false, inputValue: "", newUser: false, username: "", firstName: "" }
+    this.state = { displayState: "default", loading: false, inputValue: "", newUser: false, username: "", firstName: "", fingerprint: "", token: "" }
 
     this.handleChange = this.handleChange.bind(this);
     this.skipEmail = this.skipEmail.bind(this);
@@ -12,6 +13,7 @@ class Index extends React.Component {
     this.checkUsername = this.checkUsername.bind(this);
     this.setFirstName = this.setFirstName.bind(this);
     this.setLastName = this.setLastName.bind(this);
+    this.setState = this.setState.bind(this);
   }
 
   handleChange(event) {
@@ -35,11 +37,14 @@ class Index extends React.Component {
 
   checkUsername(event) {
     event.preventDefault();
-    const username = this.state.inputValue;
+    let username = this.state.inputValue.toLowerCase();
+    if (username.indexOf("@") >= 0) {
+      username = username.substring(0, username.indexOf("@"));
+    }
     this.setState({ username, loading: true })
 
     const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
-    const url = "http://" + host + "/checkUser?username=" + username;
+    const url = "http://" + host + "/checkUser?username=" + username + "&fingerprint=" + this.state.fingerprint;
     fetch(url, {
       method: 'POST'
     }).then(response => response.json())
@@ -50,8 +55,10 @@ class Index extends React.Component {
           loading: false,
           inputValue: "",
           newUser: data.state === "newUser",
-          firstName: data.firstName
+          firstName: data.firstName,
+          token: data.state == "authenticated" ? data.token : ""
         });
+        
       }).catch((error) => {
         this.setState({ displayState: "error" });
       });
@@ -122,13 +129,26 @@ class Index extends React.Component {
       return <InputContentBox title="Identify Yourself 🔐" subtitle="You should have received your code via email." onFormSubmit={this.authenticate} onChange={this.handleChange} inputValue={this.state.inputValue} placeholder="Top secret" loading={this.state.loading} />;
     } else if (this.state.displayState == "invalidPassword") {
       return <InputContentBox title="Not quite 😕" subtitle="That code is incorrect. Did you get caps right?" onFormSubmit={this.authenticate} onChange={this.handleChange} inputValue={this.state.inputValue} placeholder="Top secret" loading={this.state.loading} />;
+    } else if (this.state.displayState == "authenticated") {
+      document.cookie = "token=" + this.state.token + "; path=/";
+      window.location = "/";
     } else {
       return <ErrorBox />;
     }
   }
 
   componentDidMount() {
-    console.log(process.env.NODE_ENV)
+    console.log(process.env.NODE_ENV);
+    setTimeout(() => {
+      new Fingerprint2.get((components) => {
+        var values = components.map(function (component) {
+          return component.value
+        })
+        var murmur = Fingerprint2.x64hash128(values.join(''), 31)
+        console.log(murmur)
+        this.setState({ fingerprint: murmur });
+      })
+    }, 800)
   }
 
   render() {
@@ -218,7 +238,7 @@ class DialogueBox extends React.Component {
       display: "block",
       paddingBottom: "10px"
     }
-    
+
     return (
       <ContentBox title={this.props.title} subtitle={"We're sending your code to " + this.props.username + "@purdue.edu."}>
         <Button buttonText="Email me the code" fontSize="15" width="180" onClick={this.props.onSubmit} />

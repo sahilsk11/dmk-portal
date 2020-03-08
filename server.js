@@ -28,6 +28,7 @@ app.get("/", (req, res) => {
 
 app.post("/checkUser", (req, res) => {
   const username = req.query.username;
+  const fingerprint = req.query.fingerprint;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + process.env.api_key;
 
   request(baseURL, function (error, response, body) {
@@ -35,11 +36,24 @@ app.post("/checkUser", (req, res) => {
     var i = 0;
     while (i < airtableResp.records.length) {
       if (username === airtableResp.records[i].fields.username) {
-        res.json({
-          state: 'returningUser',
-          cellID: airtableResp.records[i].id,
-          firstName: airtableResp.records[i].fields.firstName
-        });
+        const knownFingerprints = airtableResp.records[i].fields.fingerprints;
+        if (airtableResp.records[i].fields.knownFingerprints.includes(fingerprint)) {
+          /**
+           * USER FINGERPRINT MATCHES
+           */
+          res.json({
+            state: 'authenticated',
+            cellID: airtableResp.records[i].id,
+            token: airtableResp.records[i].fields.token,
+            firstName: airtableResp.records[i].fields.firstName
+          });
+        } else {
+          res.json({
+            state: 'returningUser',
+            cellID: airtableResp.records[i].id,
+            firstName: airtableResp.records[i].fields.firstName
+          });
+        }
         return;
       }
       i++;
@@ -67,7 +81,7 @@ app.get("/sendEmail", (req, res) => {
   });
 });
 
-function addUserToDatabase(username, firstName, lastName, token, resolve) {
+function addUserToDatabase(username, firstName, lastName, token, fingerprint, resolve) {
   const apiKey = process.env.api_key;
   const baseURL = "https://api.airtable.com/v0/appwaUv9OXdJ4UNpy/brother_data?api_key=" + apiKey;
   const jsonString = {
@@ -78,7 +92,8 @@ function addUserToDatabase(username, firstName, lastName, token, resolve) {
           lastName,
           firstName,
           token,
-          attendance: 0
+          attendance: 0,
+          knownFingerprints: [fingerprint]
         }
       }
     ]
