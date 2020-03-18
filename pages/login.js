@@ -43,7 +43,7 @@ class Index extends React.Component {
     }
     this.setState({ username, loading: true })
 
-    const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
+    const host = process.env.NODE_ENV == "production" ? "https://server.dmkalpha.org" : "localhost:8080";
     const url = "http://" + host + "/checkUser?username=" + username + "&fingerprint=" + this.state.fingerprint;
     fetch(url, {
       method: 'POST'
@@ -80,7 +80,7 @@ class Index extends React.Component {
     const lastName = this.state.lastName;
     this.setState({ loading: true })
 
-    const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
+    const host = process.env.NODE_ENV == "production" ? "https://server.dmkalpha.org" : "localhost:8080";
     const url = "http://" + host + "/sendEmail?username=" + username + "&firstName=" + firstName + "&lastName=" + lastName + "&newUser=" + this.state.newUser + "&cellID=" + this.state.cellID;
     fetch(url).then(response => response.json())
       .then(data => {
@@ -101,7 +101,7 @@ class Index extends React.Component {
     const token = this.state.inputValue;
 
 
-    const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
+    const host = process.env.NODE_ENV == "production" ? "https://server.dmkalpha.org" : "localhost:8080";
     const url = "http://" + host + "/authenticate?username=" + this.state.username + "&token=" + token + "&fingerprint=" + this.state.fingerprint + "&cellID=" + this.state.cellID;
     fetch(url, {
       method: "POST"
