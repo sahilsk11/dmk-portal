@@ -464,7 +464,7 @@ class PageContent extends React.Component {
   }
 
   fetchPageData() {
-    const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
+    const host = process.env.NODE_ENV == "production" ? "https://server.dmkalpha.org" : "localhost:8080";
     const url = "http://" + host + "/pageData?token=" + Cookies.get("token");
     fetch(url).then(res => res.json())
       .then((data) => {
@@ -627,7 +627,7 @@ class CheckInContent extends React.Component {
       token: Cookies.get("token"),
       username: this.props.username
     }
-    const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
+    const host = process.env.NODE_ENV == "production" ? "https://server.dmkalpha.org" : "localhost:8080";
     const url = "http://" + host + "/validateCheckInCode" + this.stringifyURLParams(urlParams);
     fetch(url).then(res => res.json()).then((data) => {
       this.setState({
@@ -646,7 +646,7 @@ class CheckInContent extends React.Component {
       feedback: this.state.inputValue,
       cellID: this.props.cellID
     }
-    const host = process.env.NODE_ENV == "production" ? "server.dmkalpha.org" : "localhost:8080";
+    const host = process.env.NODE_ENV == "production" ? "https://server.dmkalpha.org" : "localhost:8080";
     const url = "http://" + host + "/submitAttendance" + this.stringifyURLParams(urlParams);
 
     let date = new Date().toLocaleDateString();
