@@ -464,8 +464,8 @@ class PageContent extends React.Component {
   }
 
   fetchPageData() {
-    const host = process.env.NODE_ENV == "production" ? "https://server.dmkalpha.org" : "localhost:8080";
-    const url = "http://" + host + "/pageData?token=" + Cookies.get("token");
+    const host = process.env.NODE_ENV == "production" ? "https://server.dmkalpha.org" : "http://localhost:8080";
+    const url = host + "/pageData?token=" + Cookies.get("token");
     fetch(url).then(res => res.json())
       .then((data) => {
         this.setState({
@@ -627,8 +627,8 @@ class CheckInContent extends React.Component {
       token: Cookies.get("token"),
       username: this.props.username
     }
-    const host = process.env.NODE_ENV == "production" ? "https://server.dmkalpha.org" : "localhost:8080";
-    const url = "http://" + host + "/validateCheckInCode" + this.stringifyURLParams(urlParams);
+    const host = process.env.NODE_ENV == "production" ? "https://server.dmkalpha.org" : "http://localhost:8080";
+    const url = host + "/validateCheckInCode" + this.stringifyURLParams(urlParams);
     fetch(url).then(res => res.json()).then((data) => {
       this.setState({
         displayState: data.validCode ? "rateChapter" : "invalid",
@@ -646,8 +646,8 @@ class CheckInContent extends React.Component {
       feedback: this.state.inputValue,
       cellID: this.props.cellID
     }
-    const host = process.env.NODE_ENV == "production" ? "https://server.dmkalpha.org" : "localhost:8080";
-    const url = "http://" + host + "/submitAttendance" + this.stringifyURLParams(urlParams);
+    const host = process.env.NODE_ENV == "production" ? "https://server.dmkalpha.org" : "http://localhost:8080";
+    const url = host + "/submitAttendance" + this.stringifyURLParams(urlParams);
 
     let date = new Date().toLocaleDateString();
     if (Cookies.get("check-in") == date) {
